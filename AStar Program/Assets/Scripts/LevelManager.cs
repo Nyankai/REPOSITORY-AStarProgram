@@ -54,7 +54,16 @@ public class LevelManager : MonoBehaviour
 
 	void Start()
 	{
-		ExecuteNextTurn();
+		// for: Every registered character of type Enemy, calculates the AStar
+		//for (int i = 0; i < mList_Character.Count; i++)
+		//	if (mList_Character[i].CharacterType == EnumCharacterType.Enemy)
+		//		(mList_Character[i] as UnityEngine.Object as System.Object as Enemy).RemoteCallAStar();
+		string str = "| ";
+		for (int i = 0; i < mList_Character.Count; i++)
+			str += (mList_Character[i].gameObject.name + " | ");
+
+		Debug.Log(str);
+			ExecuteNextTurn();
 	}
 
 	// Public Functions
@@ -116,17 +125,23 @@ public class LevelManager : MonoBehaviour
 				arr2_characterConstrain[j, i] = true;
 
 		for (int i = 0; i < mList_Character.Count; i++)
-		{
 			if (mList_Character[i].CharacterType == EnumCharacterType.Enemy)
-				if (i != m_nCurrentTurn)
-				{
-					if (mList_Character[i].AStarInstance.StartNode.linkTo != null)
-					{
-						mList_Character[i].AStarInstance.ReInitialiseStartAndTargetNode();
-						arr2_characterConstrain[mList_Character[i].AStarInstance.StartNode.linkTo.x, mList_Character[i].AStarInstance.StartNode.linkTo.y] = false;
-					}
-				}
-		}
+			{
+				int[] arr_gridPos = mList_Character[i].AStarInstance.Position2GridCoords(mList_Character[i].transform.position);
+				arr2_characterConstrain[arr_gridPos[0], arr_gridPos[1]] = false;
+			}
+
+		//for (int i = 0; i < mList_Character.Count; i++)
+		//{
+		//	if (mList_Character[i].CharacterType == EnumCharacterType.Enemy)
+		//		if (i != m_nCurrentTurn)
+		//		{
+		//			if (mList_Character[i].AStarInstance.StartNode != null)
+		//			{
+		//				arr2_characterConstrain[mList_Character[i].AStarInstance.StartNode.x, mList_Character[i].AStarInstance.StartNode.y] = false;
+		//			}
+		//		}
+		//}
 		return arr2_characterConstrain;
 	}
 

@@ -13,8 +13,9 @@ public class Enemy : Character
 		if (!m_AStar.Pathfind(true))
 		{
 			Debug.LogWarning("Enemy.ExecuteTurn(): AStar.Pathfind is returning false!");
-			return; 
+			return;
 		}
+
 		if (m_AStar.StartNode.linkTo == m_AStar.TargetNode)
 		{
 			MoveToAction action_HitFirst = new MoveToAction(this.transform, m_AStar.TargetNode.position, 0.1f);
@@ -27,10 +28,17 @@ public class Enemy : Character
 		else
 		{
 			MoveToAction action_MoveTo = new MoveToAction(this.transform, Graph.InverseExponential, m_AStar.StartNode.linkTo.position, 0.5f);
+			action_MoveTo.OnActionFinish += this.PostTurn;
 			action_MoveTo.OnActionFinish += LevelManager.Instance.ExecuteNextTurn;
 
 			ActionHandler.RunAction(action_MoveTo);
 		}
+	}
+
+	// PostTurn(): This is called post-turn
+	void PostTurn()
+	{
+
 	}
 
 	// Private Functions
@@ -39,6 +47,19 @@ public class Enemy : Character
 		m_AStar = GetComponent<AStar>();
 		LevelManager.Instance.AddCharacter(this);
 		menum_CharacterType = EnumCharacterType.Enemy;
+	}
+
+	/// <summary>
+	/// A function to call the AStar of the enemy
+	/// </summary>
+	public void RemoteCallAStar()
+	{
+		// Runs the AStar algorithm at least once
+		m_AStar.SetGridConstrain(LevelManager.Instance.LevelData, LevelManager.Instance.GetEnemyConstrain());
+		if (!m_AStar.Pathfind(true))
+		{
+			Debug.LogWarning("Enemy.ExecuteTurn(): AStar.Pathfind is returning false!");
+		}
 	}
 
 	private float HitFirstFunction(float _x) { return 1.0f - Mathf.Pow(1.0f - _x, 10f); }

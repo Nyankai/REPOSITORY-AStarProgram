@@ -35,6 +35,8 @@ public class AStar : MonoBehaviour
 	private bool[,] marr2_constrainGrid = null;
 	private bool bIsComplete = false;
 	private Vector3 mVec3_startPosition;
+	private int[] marr_gridPosStart = new int[] { 0, 0 };
+	private int[] marr_gridPosTarget = new int[] { 0, 0 };
 
 	// Gizmos Functions
 	void OnDrawGizmosSelected()
@@ -108,26 +110,54 @@ public class AStar : MonoBehaviour
 		}
 	}
 
-	void Awake()
+	// Public Functions
+	/// <summary>
+	/// Converts world-coordinates to an available grid position
+	/// </summary>
+	/// <param name="_position"> The world coordinates to convert to </param>
+	/// <returns> Returns the nearest coordinates in the grid in an integer array (length of 2) </returns>
+	public int[] Position2GridCoords(Vector3 _position)
 	{
-		ReInitialiseStartPosition();
-		ReInitialiseStartAndTargetNode();
+		int[] gridCoords = new int[] { -1, -1 };	// gridCoords: The returning int[]
+		float fShortestMagnitude = -1f;				// fShortestMagnitude: The shortest magnitude between the target and the nearest grid
+
+		for (int i = 0; i < m_nGridSize; i++)
+			for (int j = 0; j < m_nGridSize; j++)
+			{
+				Vector3 currentGridPosition = mVec3_startPosition + new Vector3(j * m_fSizePerGrid, 0f, i * m_fSizePerGrid);
+				float fCurrentMagnitude = Vector3.Magnitude(currentGridPosition - _position);
+
+				if (fShortestMagnitude == -1f || fShortestMagnitude > fCurrentMagnitude)
+				{
+					gridCoords[0] = j; gridCoords[1] = i;
+					fShortestMagnitude = fCurrentMagnitude;
+				}
+			}
+
+		return gridCoords;
 	}
 
-	// ReInitialiseStartPosition(): Re-initialise the start position of the grid
-	private void ReInitialiseStartPosition()
+	/// <summary>
+	/// Recalculates the entire pathfinding entry - resets all its values
+	/// </summary>
+	/// <param name="isFindNearest"> Determines if the algorithm cannot find a path, should it return a path nearest to target instead? </param>
+	/// <returns> Returns if a path is found from the start to target </returns>
+	public bool Pathfind(bool isFindNearest = false)
 	{
+		// Double-Checking
+		if (m_startTransform != null)
+			m_startPosition = m_startTransform.position;
+		if (m_targetTransform != null)
+			m_targetPosition = m_targetTransform.position;
+
+		// Local Variables Initialization
+		// Re-initialise the start position
 		mVec3_startPosition =
 			m_position
 			// Subtraction from grid space
 			- new Vector3((float)m_nGridSize / 2f, 0f, (float)m_nGridSize / 2f)
 			+ new Vector3((float)m_fSizePerGrid / 2f, 0f, (float)m_fSizePerGrid / 2f);
-	}
 
-	// ReInitialiseStartAndTargetNode(): Re-initialise the start and target node of the AStar algorithm
-	//									 Returns if the start and target node is different
-	public bool ReInitialiseStartAndTargetNode()
-	{
 		// if: Checks if the contrain grid is defined or is in the correct size
 		if (marr2_constrainGrid == null)
 		{
@@ -155,55 +185,16 @@ public class AStar : MonoBehaviour
 		m_targetNode = null;
 		marr_gridData = new AStarNode[m_nGridSize, m_nGridSize];
 
-		int[] arr_nShortestToStart = new int[] { -1, -1 };
-		int[] arr_nShortestToEnd = new int[] { -1, -1 };
-		float fShortestToStart = -1f;
-		float fShortestToEnd = -1f;
-
-		// for, for: Finds the closest grid to the start and the closest grid to the end
-		for (int i = 0; i < m_nGridSize; i++)
-		{
-			for (int j = 0; j < m_nGridSize; j++)
-			{
-				if (marr2_constrainGrid[j, i])
-				{
-					Vector3 positionCurrentNode = mVec3_startPosition + new Vector3(j * m_fSizePerGrid, 0f, i * m_fSizePerGrid);
-					float fMagnitude = Vector3.SqrMagnitude(positionCurrentNode - m_startPosition);
-					// if, else if: Checks if the current node is the closest to the starting point, determines m_startNode
-					if (arr_nShortestToStart[0] == -1)
-					{
-						arr_nShortestToStart[0] = j; arr_nShortestToStart[1] = i;
-						fShortestToStart = fMagnitude;
-					}
-					else if (fMagnitude < fShortestToStart)
-					{
-						arr_nShortestToStart[0] = j; arr_nShortestToStart[1] = i;
-						fShortestToStart = fMagnitude;
-					}
-
-					fMagnitude = Vector3.SqrMagnitude(positionCurrentNode - m_targetPosition);
-					// if, else if: Checks if the current node is the closest to the target point, determines m_endNode
-					if (arr_nShortestToEnd[0] == -1)
-					{
-						arr_nShortestToEnd[0] = j; arr_nShortestToEnd[1] = i;
-						fShortestToEnd = fMagnitude;
-					}
-					else if (fMagnitude < fShortestToEnd)
-					{
-						arr_nShortestToEnd[0] = j; arr_nShortestToEnd[1] = i;
-						fShortestToEnd = fMagnitude;
-					}
-				}
-			}
-		}
+		int[] arr_gridPosStart = this.Position2GridCoords(m_startPosition);
+		int[] arr_gridPosTarget = this.Position2GridCoords(m_targetPosition);
 
 		// Initialises a new AStarNode as the start and target Node
 		m_startNode = new AStarNode(
 			mVec3_startPosition
-			+ new Vector3(arr_nShortestToStart[0] * m_fSizePerGrid, 0f, arr_nShortestToStart[1] * m_fSizePerGrid));
+			+ new Vector3(arr_gridPosStart[0] * m_fSizePerGrid, 0f, arr_gridPosStart[1] * m_fSizePerGrid));
 		m_targetNode = new AStarNode(
 			mVec3_startPosition
-			+ new Vector3(arr_nShortestToEnd[0] * m_fSizePerGrid, 0f, arr_nShortestToEnd[1] * m_fSizePerGrid));
+			+ new Vector3(arr_gridPosTarget[0] * m_fSizePerGrid, 0f, arr_gridPosTarget[1] * m_fSizePerGrid));
 
 		// Checks if the start and target node is the same
 		if (m_startNode.position == m_targetNode.position)
@@ -211,34 +202,11 @@ public class AStar : MonoBehaviour
 		// else: Push it into the grid data array
 		else
 		{
-			m_startNode.x = arr_nShortestToStart[0]; m_startNode.y = arr_nShortestToStart[1];
-			m_targetNode.x = arr_nShortestToEnd[0]; m_targetNode.y = arr_nShortestToEnd[1];
+			m_startNode.x = arr_gridPosStart[0]; m_startNode.y = arr_gridPosStart[1];
+			m_targetNode.x = arr_gridPosTarget[0]; m_targetNode.y = arr_gridPosTarget[1];
 
-			marr_gridData[arr_nShortestToStart[0], arr_nShortestToStart[1]] = m_startNode;
-			marr_gridData[arr_nShortestToEnd[0], arr_nShortestToEnd[1]] = m_targetNode;
-		}
-		return true;
-	}
-
-	/// <summary>
-	/// Recalculates the entire pathfinding entry - resets all its values
-	/// </summary>
-	/// <param name="isFindNearest"> Determines if the algorithm cannot find a path, should it return a path nearest to target instead? </param>
-	/// <returns> Returns if a path is found from the start to target </returns>
-	public bool Pathfind(bool isFindNearest = false)
-	{
-		// Double-Checking
-		if (m_startTransform != null)
-			m_startPosition = m_startTransform.position;
-		if (m_targetTransform != null)
-			m_targetPosition = m_targetTransform.position;
-
-		// Local Variables Initialization
-		ReInitialiseStartPosition();
-		if (!ReInitialiseStartAndTargetNode())
-		{
-			Debug.Log(gameObject.name + ".AStar.Pathfind(): Start node and target node in the same position");
-			return true;
+			marr_gridData[arr_gridPosStart[0], arr_gridPosStart[1]] = m_startNode;
+			marr_gridData[arr_gridPosTarget[0], arr_gridPosTarget[1]] = m_targetNode;
 		}
 
 		// Starting AStar Sequence
@@ -419,7 +387,7 @@ public class AStar : MonoBehaviour
 
 	public Vector3 GridIndex2Position(int _x, int _y)
 	{
-		return mVec3_startPosition + new Vector3(_x * m_fSizePerGrid, 0.5f, _y * m_fSizePerGrid);
+		return mVec3_startPosition + new Vector3(_x * m_fSizePerGrid, 0.25f, _y * m_fSizePerGrid);
 	}
 
 	// Getter-Setter Functions
