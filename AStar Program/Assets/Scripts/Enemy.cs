@@ -5,7 +5,6 @@ using DaburuTools.Action;	// DaburuTools.Actions: This is in v0.4
 
 public class Enemy : Character 
 {
-
 	// Protected Functions
 	public override void ExecuteTurn()
 	{
@@ -45,8 +44,8 @@ public class Enemy : Character
 	void Awake()
 	{
 		m_AStar = GetComponent<AStar>();
-		LevelManager.Instance.AddCharacter(this);
 		menum_CharacterType = EnumCharacterType.Enemy;
+		LevelManager.Instance.AddCharacter(this);
 	}
 
 	/// <summary>

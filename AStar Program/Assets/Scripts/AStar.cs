@@ -387,7 +387,7 @@ public class AStar : MonoBehaviour
 
 	public Vector3 GridIndex2Position(int _x, int _y)
 	{
-		return mVec3_startPosition + new Vector3(_x * m_fSizePerGrid, 0.25f, _y * m_fSizePerGrid);
+		return mVec3_startPosition + new Vector3(_x * m_fSizePerGrid, 0.0f, _y * m_fSizePerGrid);
 	}
 
 	// Getter-Setter Functions

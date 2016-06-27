@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public enum EnumCharacterType { Player = 0, Enemy = 1 };
-
 public class LevelManager : MonoBehaviour 
 {
 	// Static Variables
@@ -20,6 +18,7 @@ public class LevelManager : MonoBehaviour
 	private EnumCharacterType menum_currentTurn;
 	private int m_nCurrentTurn = -1;
 	private List<Character> mList_Character = new List<Character>();
+	private Player m_playerInstance = null;
 
 	// Private Functions
 	// Awake(): is called at the start when initialized
@@ -44,6 +43,7 @@ public class LevelManager : MonoBehaviour
 					if ((float)(i + j) % 2f == 1f)
 						if (currentTile.GetComponent<SpriteRenderer>() != null)
 							currentTile.GetComponent<SpriteRenderer>().color = m_ColorDarkTiles;
+					currentTile.transform.SetParent(GameObject.Find("GROUP_Tiles").transform);
 				}
 			}
 
@@ -52,6 +52,7 @@ public class LevelManager : MonoBehaviour
 		marr2_tileOccupiedAtAwake = new bool[m_nLevelLength, m_nLevelLength];
 	}
 
+	// Start(): Use this for initialisation
 	void Start()
 	{
 		// for: Every registered character of type Enemy, calculates the AStar
@@ -74,24 +75,33 @@ public class LevelManager : MonoBehaviour
 	/// <returns> Returns if the character is added into the list. If false, the character is already in the list</returns>
 	public bool AddCharacter(Character _characterType)
 	{
+		if (mList_Character.Contains(_characterType))
+			return false;
+
 		bool bIsFoundPlace = false;
 		do
 		{
 			int x = (int)(UnityEngine.Random.value * (float)m_nLevelLength);
 			int y = (int)(UnityEngine.Random.value * (float)m_nLevelLength);
 
-			// if: There is a tile at position [x, y]
-			if (marr2_levelData[x, y])
-				if (!marr2_tileOccupiedAtAwake[x, y])
-				{
-					_characterType.transform.position = _characterType.AStarInstance.GridIndex2Position(x, y);
-					bIsFoundPlace = true;
-				}
+			if (_characterType.CharacterType == EnumCharacterType.Enemy)
+			{
+				// if: There is a tile at position [x, y]
+				if (marr2_levelData[x, y])
+					if (!marr2_tileOccupiedAtAwake[x, y])
+					{
+						_characterType.transform.position = _characterType.AStarInstance.GridIndex2Position(x, y);
+						bIsFoundPlace = true;
+					}
+			}
+			// else: If the character type is typeof Player
+			else
+				bIsFoundPlace = true;
 
 		} while (!bIsFoundPlace);
 
-		if (mList_Character.Contains(_characterType))
-			return false;
+		if (_characterType.CharacterType == EnumCharacterType.Player)
+			m_playerInstance = _characterType.GetComponent<Player>();
 
 		mList_Character.Add(_characterType);
 		return true;
@@ -117,6 +127,10 @@ public class LevelManager : MonoBehaviour
 		mList_Character[m_nCurrentTurn].ExecuteTurn();
 	}
 
+	/// <summary>
+	/// Inefficiently returns the enemy's constrain
+	/// </summary>
+	/// <returns></returns>
 	public bool[,] GetEnemyConstrain()
 	{
 		bool[,] arr2_characterConstrain = new bool[m_nLevelLength, m_nLevelLength];
@@ -131,22 +145,22 @@ public class LevelManager : MonoBehaviour
 				arr2_characterConstrain[arr_gridPos[0], arr_gridPos[1]] = false;
 			}
 
-		//for (int i = 0; i < mList_Character.Count; i++)
-		//{
-		//	if (mList_Character[i].CharacterType == EnumCharacterType.Enemy)
-		//		if (i != m_nCurrentTurn)
-		//		{
-		//			if (mList_Character[i].AStarInstance.StartNode != null)
-		//			{
-		//				arr2_characterConstrain[mList_Character[i].AStarInstance.StartNode.x, mList_Character[i].AStarInstance.StartNode.y] = false;
-		//			}
-		//		}
-		//}
 		return arr2_characterConstrain;
 	}
 
 	// Getter-Setter Functions
+	/// <summary>
+	/// Returns the single instance of LevelManager
+	/// </summary>
 	public static LevelManager Instance { get { return ms_levelManager; } }
 
+	/// <summary>
+	/// Returns the data of the current level
+	/// </summary>
 	public bool[,] LevelData { get { return marr2_levelData; } }
+
+	/// <summary>
+	/// Returns the instance of the current player
+	/// </summary>
+	public Player PlayerInstance { get { return m_playerInstance; } }
 }

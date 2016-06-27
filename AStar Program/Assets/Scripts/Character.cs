@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+public enum EnumPieceType { Null = 0, Rook, Bishop, Knight, King };
+public enum EnumCharacterType { Player = 0, Enemy = 1 };
+
 public abstract class Character : MonoBehaviour 
 {
 	protected AStar m_AStar = null;

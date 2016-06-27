@@ -14,6 +14,8 @@ namespace DaburuTools
 			float mfElaspedDuration;
 			Graph mGraph;
 
+			public float PercentageComplete { get { return mfElaspedDuration / mfActionDuration; } }
+
 			public ScaleToAction(Transform _transform, Graph _graph, Vector3 _desiredScale, float _actionDuration)
 			{
 				mTransform = _transform;
