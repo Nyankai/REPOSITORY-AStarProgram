@@ -12,7 +12,6 @@ public class LevelManager : MonoBehaviour
 
 	// Un-editable Variables
 	private bool[,] marr2_levelData = null;				// marr2_levelData: The level data of the current level
-	private bool[,] marr2_tileOccupiedAtAwake = null;	// marr2_tileOccupiedAtAwake: This is used for initialisation at the start of the game
 	private int m_nLevelLength = 0;						// m_nLevelLength: The length of the level
 
 	private EnumCharacterType menum_currentTurn;
@@ -49,7 +48,6 @@ public class LevelManager : MonoBehaviour
 
 		// Variables Definition
 		m_nLevelLength = Level.CurrentLevel.TileLength;
-		marr2_tileOccupiedAtAwake = new bool[m_nLevelLength, m_nLevelLength];
 	}
 
 	// Start(): Use this for initialisation
@@ -85,11 +83,12 @@ public class LevelManager : MonoBehaviour
 			{
 				// if: There is a tile at position [x, y]
 				if (marr2_levelData[x, y])
-					if (!marr2_tileOccupiedAtAwake[x, y])
-					{
-						_characterType.transform.position = _characterType.AStarInstance.GridIndex2Position(x, y);
-						bIsFoundPlace = true;
-					}
+				{
+					_characterType.transform.position = _characterType.AStarInstance.GridIndex2Position(x, y);
+					_characterType.X = x;
+					_characterType.Y = y;
+					bIsFoundPlace = true;
+				}
 			}
 			// else: If the character type is typeof Player
 			else
@@ -125,22 +124,28 @@ public class LevelManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Inefficiently returns the enemy's constrain
+	/// Inefficiently returns the character's constrain
 	/// </summary>
-	/// <returns></returns>
-	public bool[,] GetEnemyConstrain()
+	/// <param name="_enumCharacter"> Specifies a sepcific character type to check for contrain. Returns all character types' constrains if NULL is chosen instead </param>
+	/// <returns> Returns the boolean array grid of all the character's constrain </returns>
+	public bool[,] GetCharacterConstrain(EnumCharacterType _enumCharacter)
 	{
+		// arr2_characterConstrain: Create a new constrain and set everywhere to be walkable
 		bool[,] arr2_characterConstrain = new bool[m_nLevelLength, m_nLevelLength];
 		for (int i = 0; i < arr2_characterConstrain.GetLength(0); i++)
 			for (int j = 0; j < arr2_characterConstrain.GetLength(1); j++)
 				arr2_characterConstrain[j, i] = true;
 
+		// for: Every registered character in the list...
 		for (int i = 0; i < mList_Character.Count; i++)
-			if (mList_Character[i].CharacterType == EnumCharacterType.Enemy)
-			{
-				int[] arr_gridPos = mList_Character[i].AStarInstance.Position2GridCoords(mList_Character[i].transform.position);
-				arr2_characterConstrain[arr_gridPos[0], arr_gridPos[1]] = false;
-			}
+		{
+			// if: No character type is specified
+			if (_enumCharacter == EnumCharacterType.Null)
+				arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
+			// else if: A certain character type is specified
+			else if (mList_Character[i].CharacterType == _enumCharacter)
+				arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
+		}
 
 		return arr2_characterConstrain;
 	}

@@ -6,8 +6,6 @@ using DaburuTools.Action;
 public class Player : Character
 {
 	// Uneditable Functions
-	private int m_nGridX = -1;
-	private int m_nGridY = -1;
 	private EnumPieceType[] m_enumCards = null;
 	private int m_nNextAvailableSlot = 4;
 
@@ -18,13 +16,15 @@ public class Player : Character
 	public override void ExecuteTurn()
 	{
 		m_bIsExecuteTurn = true;
-		//UI_CardSelection.Instance.BeginSequence();
+		UI_PlayerTurn.Instance.BeginSequence();
 	}
 
 	// Private Functions
 	// Awake(): is called at the start of a program
 	void Awake()
 	{
+		m_nX = -1;
+		m_nY = -1;
 		marr2_gridData = LevelManager.Instance.LevelData;
 		menum_CharacterType = EnumCharacterType.Player;
 		LevelManager.Instance.AddCharacter(this);
@@ -42,7 +42,6 @@ public class Player : Character
 			return;
 
 		DrawCard(1);
-		UI_PlayerTurn.Instance.BeginSequence();
 		m_bIsExecuteTurn = false;
 	}
 
