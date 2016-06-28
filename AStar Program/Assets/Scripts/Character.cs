@@ -30,8 +30,10 @@ public abstract class Character : MonoBehaviour
 	/// <summary>
 	/// Return the x-coordinates of the character
 	/// </summary>
+	public int X { get { return m_nX; } set { m_nX = value; } }
 
 	/// <summary>
 	/// Return the y-coordinates of the character
 	/// </summary>
+	public int Y { get { return m_nY; } set { m_nY = value; } }
 }
