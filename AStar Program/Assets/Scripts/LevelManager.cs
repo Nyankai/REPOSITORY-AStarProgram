@@ -55,16 +55,13 @@ public class LevelManager : MonoBehaviour
 	// Start(): Use this for initialisation
 	void Start()
 	{
-		// for: Every registered character of type Enemy, calculates the AStar
-		//for (int i = 0; i < mList_Character.Count; i++)
-		//	if (mList_Character[i].CharacterType == EnumCharacterType.Enemy)
-		//		(mList_Character[i] as UnityEngine.Object as System.Object as Enemy).RemoteCallAStar();
 		string str = "| ";
 		for (int i = 0; i < mList_Character.Count; i++)
 			str += (mList_Character[i].gameObject.name + " | ");
 
 		Debug.Log(str);
-			ExecuteNextTurn();
+		ExecuteNextTurn();
+		CameraManager.Instance.LookAt(new Vector3(7f, 0f, 7f), false);
 	}
 
 	// Public Functions

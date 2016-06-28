@@ -12,6 +12,8 @@ public class UI_CardSelection : MonoBehaviour
 	[Header("Color Properties")]
 	[SerializeField] private Color m_colorCard = Color.white;			// m_colorCard: The color of the card
 	[SerializeField] private Color m_colorCardHighlight = Color.white;	// m_colorCardHighlight: The color of the card highlight
+	[SerializeField] private Color m_colorCardSelect = Color.white;		// m_colorCardSelect: The color of the card when selected
+	[SerializeField] private Color m_colorCardSelectHightlight = Color.white;
 	[SerializeField] private Color m_colorHeader = Color.white;			// m_colorHeader: The color of the card's header
 	[SerializeField] private Color m_colorSubheader = Color.white;		// m_colorSubheader: The color of the card's sub-header
 
@@ -29,6 +31,7 @@ public class UI_CardSelection : MonoBehaviour
 	private Text[] marr_textHeader = null;
 	private Text[] marr_textSubheader = null;
 	private float m_fInitialY = 0f;
+	private int m_nCurrentSelectCard = -1;
 
 	private DelayAction[] marr_actDelay = null;
 	private LocalMoveToAction[] marr_actMoveToHide = null;
@@ -71,10 +74,7 @@ public class UI_CardSelection : MonoBehaviour
 			m_fInitialY = marr_buttonCards[i].transform.localPosition.y;
 
 			// Update button colors
-			ColorBlock colorBlock = marr_buttonCards[i].colors;
-			colorBlock.normalColor = m_colorCard;
-			colorBlock.highlightedColor = m_colorCardHighlight;
-			marr_buttonCards[i].colors = colorBlock;
+			ChangeCardColor(i, m_colorCard, m_colorCardHighlight);
 
 			// Update header colors
 			marr_textHeader[i].color = m_colorHeader;
@@ -109,14 +109,47 @@ public class UI_CardSelection : MonoBehaviour
 		m_fInitialY = marr_buttonCards[0].transform.localPosition.y;
 	}
 
+	// ChangeCardColor(): Change the card's color
+	private void ChangeCardColor(int _nIndex, Color _colorNormal, Color _colorHighlight)
+	{
+		if (_nIndex < 0 || _nIndex >= m_nCardCount)
+		{
+			Debug.LogWarning(name + ".UI_CardSelection.ChangeCardColor(): _nIndex is out of range! _nIndex: " + _nIndex);
+			return;
+		}
+
+		ColorBlock colorBlock = marr_buttonCards[_nIndex].colors;
+		colorBlock.normalColor = _colorNormal;
+		colorBlock.highlightedColor = _colorHighlight;
+		colorBlock.pressedColor = _colorNormal;
+		marr_buttonCards[_nIndex].colors = colorBlock;
+	}
+
 	// Public Functions
 	/// <summary>
 	/// CALLED ONLY BE THE CARDS. This method handles what happens on the button presses
 	/// </summary>
-	/// <param name="_nButtonIndex"></param>
+	/// <param name="_nButtonIndex"> The index position of the button, based on child hiearchy </param>
 	public void ButtonClick(int _nButtonIndex)
 	{
+		// if: Error checking
+		if (_nButtonIndex < 0 || _nButtonIndex >= m_nCardCount)
+		{
+			Debug.LogWarning(name + ".UI_CardSelection.ButtonClick(): parameter is out of range! m_nButtonIndex = " + _nButtonIndex);
+			return;
+		}
 
+		// if: There is a card selected previously, deselect this card
+		if (m_nCurrentSelectCard != -1)
+		{
+			ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardHighlight);
+			m_nCurrentSelectCard = -1;
+		}
+
+		ChangeCardColor(_nButtonIndex, m_colorCardSelect, m_colorCardSelectHightlight);
+		m_nCurrentSelectCard = _nButtonIndex;
+
+		CameraManager.Instance.ZoomInAt(LevelManager.Instance.PlayerInstance.transform, true);
 	}
 
 	/// <summary>
