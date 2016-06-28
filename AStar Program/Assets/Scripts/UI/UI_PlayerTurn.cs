@@ -26,18 +26,17 @@ public class UI_PlayerTurn : MonoBehaviour
 	[Header("Animation Properties")]
 	[SerializeField] private float m_fNextCardAppearDelay = 0.25f;		// m_fNextCardAppearDelay: The time (in seconds) till the next card is shown in the introduction
 
+	[Header("Tile Selection Properties")]
+	[SerializeField] private ObjectPool m_OPSelection = null;
+
 	// Un-Editable Variables
 	private Button[] marr_buttonCards = null;
-	private Text[] marr_textHeader = null;
-	private Text[] marr_textSubheader = null;
-	private float m_fInitialY = 0f;
-	private int m_nCurrentSelectCard = -1;
+	private Text[] marr_textHeader = null;		// marr_textHeader: The array of the cards' headers
+	private Text[] marr_textSubheader = null;	// marr_textSubheader: The array of the cards' sub-headers
+	private Transform[] marr_trCards = null;	// marr_trCards: The array of the cards' transforms 
+	private float m_fDefaultYHeight = 0f;		// m_fDefaultYHeight: The initial height of each card before the game runs will determine the default Y height
 
-	private DelayAction[] marr_actDelay = null;
-	private LocalMoveToAction[] marr_actMoveToHide = null;
-	private LocalMoveToAction[] marr_actMoveToDisplay = null;
-	private LocalMoveToAction[] marr_actMoveToSelect = null;
-	private ActionSequence[] marr_actIntroSequence = null;
+	private int m_nCurrentSelectCard = -1;
 	
 	// Private Functions
 	// Awake(): is called when the script is first initialised
@@ -56,14 +55,9 @@ public class UI_PlayerTurn : MonoBehaviour
 		marr_buttonCards = new Button[m_nCardCount];
 		marr_textHeader = new Text[m_nCardCount];
 		marr_textSubheader = new Text[m_nCardCount];
+		marr_trCards = new Transform[m_nCardCount];
 
-		marr_actDelay = new DelayAction[m_nCardCount];
-		marr_actMoveToHide = new LocalMoveToAction[m_nCardCount];
-		marr_actMoveToDisplay = new LocalMoveToAction[m_nCardCount];
-		marr_actMoveToSelect = new LocalMoveToAction[m_nCardCount];
-		marr_actIntroSequence = new ActionSequence[m_nCardCount];
-
-		// for: Initialisation within each card
+		// for: Every card...
 		for (int i = 0; i < m_nCardCount; i++)
 		{
 			// Component Initialisation within each card
@@ -71,42 +65,18 @@ public class UI_PlayerTurn : MonoBehaviour
 			marr_buttonCards[i] = currentChildCard.GetComponent<Button>();
 			marr_textHeader[i] = currentChildCard.GetChild(0).GetComponent<Text>();
 			marr_textSubheader[i] = currentChildCard.GetChild(1).GetComponent<Text>();
-			m_fInitialY = marr_buttonCards[i].transform.localPosition.y;
+			marr_trCards[i] = marr_buttonCards[i].transform;
 
 			// Update button colors
 			ChangeCardColor(i, m_colorCard, m_colorCardHighlight);
-
-			// Update header colors
 			marr_textHeader[i].color = m_colorHeader;
-
-			// Update sub-header colors
 			marr_textSubheader[i].color = m_colorSubheader;
-
-			// ALL SETTINGS FOR CARDS ACTIONS IS HANDLED HERE <----------------------------------------------------------------------
-			marr_actDelay[i] = new DelayAction(i * m_fNextCardAppearDelay);
-
-			Vector3 vec3NewLocalPosition = currentChildCard.localPosition;
-
-			// Hidden Cards Actions
-			vec3NewLocalPosition.y = m_fInitialY - m_fHideHeight;
-			marr_actMoveToHide[i] = new LocalMoveToAction(currentChildCard, Graph.Bobber, vec3NewLocalPosition, 0.5f);
-
-			// Displaying Cards Actions
-			vec3NewLocalPosition.y = m_fInitialY - m_fDisplayHeight;
-			marr_actMoveToDisplay[i] = new LocalMoveToAction(currentChildCard, Graph.Bobber, vec3NewLocalPosition, 0.5f);
-
-			// Selection Cards Actions
-			vec3NewLocalPosition.y = m_fInitialY - m_fSelectedHeight;
-			marr_actMoveToSelect[i] = new LocalMoveToAction(currentChildCard, Graph.Bobber, vec3NewLocalPosition, 0.5f);
-
-			// Introduction Sequential Cards Actions
-			vec3NewLocalPosition.y = m_fInitialY - m_fHideHeight;
-			marr_actIntroSequence[i] = new ActionSequence(marr_actDelay[i], marr_actMoveToDisplay[i]);
-			marr_actIntroSequence[i].OnActionStart += () => { currentChildCard.localPosition = vec3NewLocalPosition; };
 		}
 
-		// Use the current position of each button as the initial height of each cards
-		m_fInitialY = marr_buttonCards[0].transform.localPosition.y;
+		// m_fDefaultYHeight: The initial height of each card before the game runs will determine the default Y height
+		m_fDefaultYHeight = marr_buttonCards[0].transform.localPosition.y;
+
+		TransitionExit(false);
 	}
 
 	// ChangeCardColor(): Change the card's color
@@ -139,12 +109,22 @@ public class UI_PlayerTurn : MonoBehaviour
 			return;
 		}
 
-		// if: There is a card selected previously, deselect this card
-		if (m_nCurrentSelectCard != -1)
+		// if: The card selected is the same card as the previously selected
+		if (m_nCurrentSelectCard == _nButtonIndex)
+		{
+			ChangeCardColor(_nButtonIndex, m_colorCard, m_colorCardHighlight);
+			m_nCurrentSelectCard = -1;
+
+			CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
+			return;
+		}
+		// else if: The card selected previously is not the same as this card
+		else if (m_nCurrentSelectCard != -1)
 		{
 			ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardHighlight);
 			m_nCurrentSelectCard = -1;
 		}
+		// else: (same condition with else if) There is no card selected initialy
 
 		ChangeCardColor(_nButtonIndex, m_colorCardSelect, m_colorCardSelectHightlight);
 		m_nCurrentSelectCard = _nButtonIndex;
@@ -163,34 +143,80 @@ public class UI_PlayerTurn : MonoBehaviour
 	/// <summary>
 	/// Perform the card-entering transition
 	/// </summary>
-	/// <param name="_bIsAnimate"> Determine if the </param>
+	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
 	public void TransitionEnter(bool _bIsAnimate)
 	{
+		TransitionExit(false);
+
 		EnumPieceType[] enumCards = LevelManager.Instance.PlayerInstance.CardDeck;
 		for (int i = 0; i < m_nCardCount; i++)
 		{
-			Vector3 vec3NewPosition = Vector3.zero;
+			// vec3NewCardPosition: Determine where the new card position will be, regardless of the previous position
+			Vector3 vec3NewCardPosition = Vector3.zero;
 			switch (enumCards[i])
 			{
 				case EnumPieceType.Null:
+					// Set-up the card's display
 					marr_textHeader[i].text = "NAME";
 					marr_textSubheader[i].text = "POS";
 
-					vec3NewPosition = marr_buttonCards[i].transform.localPosition;
-					vec3NewPosition.y = m_fInitialY - m_fHideHeight;
-					marr_buttonCards[i].transform.localPosition = vec3NewPosition;
+					// Set the current card to the hidden position
+					vec3NewCardPosition = marr_trCards[i].localPosition;
+					vec3NewCardPosition.y = m_fDefaultYHeight - m_fHideHeight;
 					break;
 				default:
+					// Set-up the card's display
 					marr_textHeader[i].text = enumCards[i].ToString();
-					ActionHandler.RunAction(marr_actIntroSequence[i]);
+
+					// Set the current card to the display position
+					vec3NewCardPosition = marr_trCards[i].localPosition;
+					vec3NewCardPosition.y = m_fDefaultYHeight - m_fDisplayHeight;
 					break;
+			}
+
+			// if: Animation is allowed
+			if (_bIsAnimate)
+			{
+				DelayAction actDelay = new DelayAction(i * m_fNextCardAppearDelay);
+				LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
+				ActionSequence actSequence = new ActionSequence(actDelay, actMoveToPosition);
+				ActionHandler.RunAction(actSequence);
+			}
+			else
+			{
+				marr_trCards[i].localPosition = vec3NewCardPosition;
 			}
 		}
 	}
 
-	public void TransitionExit()
+	/// <summary>
+	/// Perform a card-exiting transition
+	/// </summary>
+	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
+	public void TransitionExit(bool _bIsAnimate)
 	{
-		
+		// for: Every card...
+		for (int i = 0; i < m_nCardCount; i++)
+		{
+			// Set-up the card's display
+			marr_textHeader[i].text = "NAME";
+			marr_textSubheader[i].text = "POS";
+
+			// Set the current card to the hidden position
+			Vector3 vec3NewHidePosition = marr_trCards[i].localPosition;
+			vec3NewHidePosition.y = m_fDefaultYHeight - m_fHideHeight;
+
+			// if: Animation is allowed
+			if (_bIsAnimate)
+			{
+				LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Dipper, vec3NewHidePosition, 0.5f);
+				ActionHandler.RunAction(actMoveToPosition);
+			}
+			else
+			{
+				marr_trCards[i].localPosition = vec3NewHidePosition;
+			}
+		}
 	}
 
 	// Static Functions
