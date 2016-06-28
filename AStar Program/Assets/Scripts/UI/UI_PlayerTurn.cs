@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using DaburuTools;
 using DaburuTools.Action;
 
-public class UI_CardSelection : MonoBehaviour 
+public class UI_PlayerTurn : MonoBehaviour 
 {
 	// Static Variables
-	public static UI_CardSelection ms_Instance = null;					// ms_Instance: The single instance of this class
+	public static UI_PlayerTurn ms_Instance = null;					// ms_Instance: The single instance of this class
 
 	// Editable Variables
 	[Header("Color Properties")]
@@ -114,7 +114,7 @@ public class UI_CardSelection : MonoBehaviour
 	{
 		if (_nIndex < 0 || _nIndex >= m_nCardCount)
 		{
-			Debug.LogWarning(name + ".UI_CardSelection.ChangeCardColor(): _nIndex is out of range! _nIndex: " + _nIndex);
+			Debug.LogWarning(name + ".UI_PlayerTurn.ChangeCardColor(): _nIndex is out of range! _nIndex: " + _nIndex);
 			return;
 		}
 
@@ -135,7 +135,7 @@ public class UI_CardSelection : MonoBehaviour
 		// if: Error checking
 		if (_nButtonIndex < 0 || _nButtonIndex >= m_nCardCount)
 		{
-			Debug.LogWarning(name + ".UI_CardSelection.ButtonClick(): parameter is out of range! m_nButtonIndex = " + _nButtonIndex);
+			Debug.LogWarning(name + ".UI_PlayerTurn.ButtonClick(): parameter is out of range! m_nButtonIndex = " + _nButtonIndex);
 			return;
 		}
 
@@ -157,13 +157,22 @@ public class UI_CardSelection : MonoBehaviour
 	/// </summary>
 	public void BeginSequence()
 	{
+		UI_PlayerTurnTitle.Instance.TransitionEnter(true);
+	}
+
+	/// <summary>
+	/// Perform the card-entering transition
+	/// </summary>
+	/// <param name="_bIsAnimate"> Determine if the </param>
+	public void TransitionEnter(bool _bIsAnimate)
+	{
 		EnumPieceType[] enumCards = LevelManager.Instance.PlayerInstance.CardDeck;
 		for (int i = 0; i < m_nCardCount; i++)
 		{
 			Vector3 vec3NewPosition = Vector3.zero;
 			switch (enumCards[i])
 			{
- 				case EnumPieceType.Null:
+				case EnumPieceType.Null:
 					marr_textHeader[i].text = "NAME";
 					marr_textSubheader[i].text = "POS";
 
@@ -179,11 +188,16 @@ public class UI_CardSelection : MonoBehaviour
 		}
 	}
 
+	public void TransitionExit()
+	{
+		
+	}
+
 	// Static Functions
 	/// <summary>
-	/// Returns the single instance of the UI_CardSelection
+	/// Returns the single instance of the UI_PlayerTurn
 	/// </summary>
-	public static UI_CardSelection Instance { get { return ms_Instance; } }
+	public static UI_PlayerTurn Instance { get { return ms_Instance; } }
 
 	// Getter-Setter Functions
 	

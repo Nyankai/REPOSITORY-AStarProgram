@@ -42,7 +42,7 @@ public class Player : Character
 			return;
 
 		DrawCard(1);
-		UI_CardSelection.Instance.BeginSequence();
+		UI_PlayerTurn.Instance.BeginSequence();
 		m_bIsExecuteTurn = false;
 	}
 
