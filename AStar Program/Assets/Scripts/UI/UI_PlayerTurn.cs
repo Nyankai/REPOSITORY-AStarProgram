@@ -125,11 +125,12 @@ public class UI_PlayerTurn : MonoBehaviour
 			m_nCurrentSelectCard = -1;
 		}
 		// else: (same condition with else if) There is no card selected initialy
-
 		ChangeCardColor(_nButtonIndex, m_colorCardSelect, m_colorCardSelectHightlight);
 		m_nCurrentSelectCard = _nButtonIndex;
 
 		CameraManager.Instance.ZoomInAt(LevelManager.Instance.PlayerInstance.transform, true);
+
+		// Selection Handling
 	}
 
 	/// <summary>
@@ -158,7 +159,7 @@ public class UI_PlayerTurn : MonoBehaviour
 				case EnumPieceType.Null:
 					// Set-up the card's display
 					marr_textHeader[i].text = "NAME";
-					marr_textSubheader[i].text = "POS";
+					marr_textSubheader[i].text = " ";
 
 					// Set the current card to the hidden position
 					vec3NewCardPosition = marr_trCards[i].localPosition;
@@ -200,7 +201,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		{
 			// Set-up the card's display
 			marr_textHeader[i].text = "NAME";
-			marr_textSubheader[i].text = "POS";
+			marr_textSubheader[i].text = " ";
 
 			// Set the current card to the hidden position
 			Vector3 vec3NewHidePosition = marr_trCards[i].localPosition;
