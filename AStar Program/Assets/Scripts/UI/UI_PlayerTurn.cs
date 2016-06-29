@@ -30,6 +30,10 @@ public class UI_PlayerTurn : MonoBehaviour
 	[Header("Tile Selection Properties")]
 	[SerializeField] private ObjectPool m_OPSelection = null;
 
+	[Header("Other Buttons Properties")]
+	[SerializeField] private Button m_buttonUndo = null;
+	[SerializeField] private Button m_buttonEndTurn = null;
+
 	// Un-Editable Variables
 	private Button[] marr_buttonCards = null;
 	private Text[] marr_textHeader = null;		// marr_textHeader: The array of the cards' headers
@@ -80,6 +84,10 @@ public class UI_PlayerTurn : MonoBehaviour
 		// m_fDefaultYHeight: The initial height of each card before the game runs will determine the default Y height
 		m_fDefaultYHeight = marr_buttonCards[0].transform.localPosition.y;
 
+		// Other Buttons Initialisation
+		m_buttonUndo.colors = ChangeButtonColor(m_buttonUndo, m_colorCard, m_colorCardSelect);
+		m_buttonEndTurn.colors = ChangeButtonColor(m_buttonUndo, m_colorCard, m_colorCardSelect);
+
 		TransitionExit(false);
 	}
 
@@ -97,6 +105,16 @@ public class UI_PlayerTurn : MonoBehaviour
 		colorBlock.highlightedColor = _colorHighlight;
 		colorBlock.pressedColor = _colorNormal;
 		marr_buttonCards[_nIndex].colors = colorBlock;
+	}
+
+	// ChangeButtonColor(): Change the button's color
+	private ColorBlock ChangeButtonColor(Button _button, Color _colorNormal, Color _colorHighlight)
+	{
+		ColorBlock colorBlock = _button.colors;
+		colorBlock.normalColor = _colorNormal;
+		colorBlock.highlightedColor = _colorHighlight;
+		colorBlock.pressedColor = _colorNormal;
+		return colorBlock;
 	}
 
 	// Public Functions
@@ -170,6 +188,23 @@ public class UI_PlayerTurn : MonoBehaviour
 	}
 
 	/// <summary>
+	/// CALLED ONLY BY THE UNDO BUTTON. Performs an undo function
+	/// </summary>
+	public void Undo()
+	{
+		// for: Every element in the card order...
+		for (int i = 0; i < marr_nCardOrder.Length; i++)
+		{
+			// if: Reduce all positions from the order by 1
+			if (marr_nCardOrder[i] == (m_nCurrentTurn - 1))
+				marr_nCardOrder[i] = -1;
+		}
+		if (m_nCurrentTurn > 0)
+			m_nCurrentTurn--;
+		TransitionEnter(true);
+	}
+
+	/// <summary>
 	/// CALLED ONLY BY THE SELECTION. This method handles what happens after the user have selected a selection
 	/// </summary>
 	public void SelectionClick()
@@ -183,6 +218,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		marr_nCardOrder[m_nCurrentSelectCard] = m_nCurrentTurn;
 		m_nCurrentSelectCard = -1;
 		m_nCurrentTurn++;
+		CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
 		TransitionEnter(true);
 	}
 

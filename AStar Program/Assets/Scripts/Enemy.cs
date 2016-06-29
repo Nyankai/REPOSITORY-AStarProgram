@@ -5,9 +5,14 @@ using DaburuTools.Action;	// DaburuTools.Actions: This is in v0.4
 
 public class Enemy : Character 
 {
+	// Editable Variables
+	[SerializeField] private EnumPieceType m_enumPieceType = EnumPieceType.Null;
+
 	// Protected Functions
 	public override void ExecuteTurn()
 	{
+		UI_EnemyTurnTitle.Instance.TransitionEnemy(true, m_enumPieceType.ToString());
+
 		// if: RemoteCallAStar() runs the A-Star pathfind once
 		if (!RemoteCallAStar())
 			return;
@@ -16,7 +21,7 @@ public class Enemy : Character
 		if (m_AStar.StartNode.linkTo == m_AStar.TargetNode)
 		{
 			MoveToAction action_HitFirst = new MoveToAction(this.transform, m_AStar.TargetNode.position, 0.1f);
-			MoveToAction action_HitSecond = new MoveToAction(this.transform, Graph.Exponential, m_AStar.StartNode.position, 0.25f);
+			MoveToAction action_HitSecond = new MoveToAction(this.transform, Graph.Exponential, m_AStar.StartNode.position, 0.4f);
 			ActionSequence actionSeq_Hit = new ActionSequence(action_HitFirst, action_HitSecond);
 			actionSeq_Hit.OnActionFinish += LevelManager.Instance.ExecuteNextTurn;
 

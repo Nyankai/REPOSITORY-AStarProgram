@@ -3,27 +3,26 @@ using UnityEngine.UI;
 using DaburuTools;
 using DaburuTools.Action;
 
-// UI_PlayerTurnTitle.cs: Handles only player's turn title
-public class UI_PlayerTurnTitle : MonoBehaviour 
+public class UI_EnemyTurnTitle : MonoBehaviour 
 {
 	// Static Variables
-	private static UI_PlayerTurnTitle ms_Instance = null;
+	private static UI_EnemyTurnTitle ms_Instance = null;
 
 	// Editable Variables
 	[Header("Color Properties")]
 	[SerializeField] private Color m_colorTitle = Color.white;		// m_colorTitle: The color of the title
 	[SerializeField] private Color m_colorBackground = Color.white;	// m_colorBackground: The color of the background (Note that alpha will be ignored)
-	
+
 	[Header("Translation Properties")]
 	[SerializeField] private float m_fTitleToHide = 100f;
+	[SerializeField] private float m_fEnemyToHide = 100f;
 	[SerializeField] private float m_fBackgroundLongToHide = 90f;
 	[SerializeField] private float m_fBackgroundSideToHide = 123f;
-	[SerializeField] private float m_fUndoToHide = 100f;
-	[SerializeField] private float m_fEndTurnToHide = 100f;
 	[SerializeField] private float m_fNextElementDelay = 0.1f;
 
 	// Un-editable Variables
 	private Text m_textTitle = null;
+	private Text m_textEnemy = null;
 	private Image m_imageBackground1 = null;
 	private Image m_imageBackground2 = null;
 	private Transform[] marr_trTitleElement = null;
@@ -41,7 +40,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 	}
 
 	// Awake(): is called when the script is first initialized
-	void Start() 
+	void Start()
 	{
 		// Component Variables
 		marr_trTitleElement = new Transform[transform.childCount];
@@ -54,7 +53,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 			float fYHideHeight = 0f;
 			switch (i)
 			{
- 				case 0:
+				case 0:
 					m_imageBackground1 = marr_trTitleElement[i].GetComponent<Image>();
 					fYHideHeight = m_fBackgroundLongToHide;
 					break;
@@ -67,10 +66,8 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 					fYHideHeight = m_fTitleToHide;
 					break;
 				case 3:
-					fYHideHeight = m_fUndoToHide;
-					break;
-				case 4:
-					fYHideHeight = m_fEndTurnToHide;
+					m_textEnemy = marr_trTitleElement[i].GetComponent<Text>();
+					fYHideHeight = m_fEnemyToHide;
 					break;
 				default:
 					Debug.LogWarning(name + ".UI_PlayerTurnTitle.Start(): Child count more than expected. New child in scope?");
@@ -84,13 +81,15 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 
 		// Setting-up UI
 		TitleColor = m_colorTitle;
+		m_textEnemy.color = m_colorTitle;
 		SetBackgroundColor(m_colorBackground);
-		TransitionExit(false);
+
+		TransitionEnter(true);
 	}
 
 	// Public Functions
 	/// <summary>
-	/// Perform the entering animation of the title "Player's Turn"
+	/// Perform the entering animation of the title "Enemy's Turn"
 	/// </summary>
 	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
 	public void TransitionEnter(bool _bIsAnimate)
@@ -109,10 +108,6 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 				LocalMoveToAction actMoveEnter = new LocalMoveToAction(marr_trTitleElement[i], Graph.Bobber, marr_vec3DisplayPosition[i], 0.25f);
 				ActionSequence actSequence = new ActionSequence(actDelay, actMoveEnter);
 
-				// if: The last action completed should activate the next animation
-				if (i == marr_trTitleElement.Length - 1)
-					actSequence.OnActionFinish += () => { UI_PlayerTurn.Instance.TransitionEnter(true); };
-
 				ActionHandler.RunAction(actSequence);
 			}
 			else
@@ -123,7 +118,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Perform the exiting animation of the title "Player's Turn"
+	/// Perform the exiting animation of the title "Enemy's Turn"
 	/// </summary>
 	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
 	public void TransitionExit(bool _bIsAnimate)
@@ -152,6 +147,29 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Perform the swap animation for the enemy's name
+	/// </summary>
+	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
+	public void TransitionEnemy(bool _bIsAnimate, string _strName)
+	{
+		if (_bIsAnimate)
+		{
+			LocalMoveToAction actDropDown = new LocalMoveToAction(marr_trTitleElement[3], Graph.Exponential, marr_vec3HidePosition[3], 0.1f);
+			LocalMoveToAction actRiseUp = new LocalMoveToAction(marr_trTitleElement[3], Graph.InverseExponential, marr_vec3DisplayPosition[3], 0.1f);
+			actDropDown.OnActionFinish += () =>
+			{
+				m_textEnemy.text = _strName;
+			};
+			ActionSequence actSequence = new ActionSequence(actDropDown, actRiseUp);
+			ActionHandler.RunAction(actSequence);
+		}
+		else
+		{
+			m_textEnemy.text = _strName;
+		}
+	}
+
+	/// <summary>
 	/// Change the background color
 	/// </summary>
 	/// <param name="_colorBackground"> The new background color </param>
@@ -166,7 +184,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 	/// <summary>
 	/// Returns the single instance of UI_PlayerTurnTitle
 	/// </summary>
-	public static UI_PlayerTurnTitle Instance { get { return ms_Instance; } }
+	public static UI_EnemyTurnTitle Instance { get { return ms_Instance; } }
 
 	// Getter-Setter Functions
 	/// <summary>

@@ -36,17 +36,6 @@ public class SelectionBox : MonoBehaviour
 		ColorNormal();
 	}
 
-	// Update(): is called once per frame
-	void Update()
-	{
-		if (m_bIsAnimateSelect)
-		{
-			Color colorMaterial = m_meshRenderer.material.color;
-			colorMaterial.a = 1f - transform.localScale.x / 3f;
-			m_meshRenderer.material.color = colorMaterial;
-		}
-	}
-
 	// Public Functions
 	/// <summary>
 	/// Perform a transition-in selection
@@ -76,13 +65,17 @@ public class SelectionBox : MonoBehaviour
 	/// </summary>
 	public void TransitionSelect()
 	{
-		ScaleToAction actScaleSelect = new ScaleToAction(transform, new Vector3(3f, 3f, 3f), 0.25f);
+		m_bIsAnimateSelect = true;
+		ScaleToAction actScaleSelect = new ScaleToAction(transform, new Vector3(0f, 20f, 0f), 0.25f);
 		actScaleSelect.OnActionStart += () => 
 		{ 
 			transform.localScale = Vector3.one;
+		};
+		actScaleSelect.OnActionFinish += () => 
+		{
+			UI_PlayerTurn.Instance.ObjectPool_SelectionBox.PoolAllObjects();
 			m_bIsAnimateSelect = false;
 		};
-		actScaleSelect.OnActionFinish += () => { UI_PlayerTurn.Instance.ObjectPool_SelectionBox.PoolAllObjects(); };
 		ActionHandler.RunAction(actScaleSelect);
 	}
 

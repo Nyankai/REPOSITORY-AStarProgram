@@ -15,6 +15,7 @@ public class Player : Character
 	// Protected Functions
 	public override void ExecuteTurn()
 	{
+		UI_EnemyTurnTitle.Instance.TransitionExit(true);
 		DrawCard(1);
 		UI_PlayerTurn.Instance.BeginSequence();
 	}
