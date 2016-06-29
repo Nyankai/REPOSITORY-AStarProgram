@@ -20,6 +20,7 @@ public class UI_PlayerTurn : MonoBehaviour
 
 	[Header("Card Properties")]
 	[SerializeField] private int m_nCardCount = 5;						// m_nCardCount: The number of cards on the screen (hard-code)
+	[SerializeField] private int m_nMaximumStep = 3;					// m_nMaximumStep: The maximum number of steps the player can take each turn
 	[SerializeField] private float m_fSelectedHeight = 0f;				// m_fSelectedHeight: The height of the card when it is selected
 	[SerializeField] private float m_fDisplayHeight = 32f;				// m_fDisplayHeight: The height of the card when it is displaying
 	[SerializeField] private float m_fHideHeight = 64f;					// m_fHideHeight: The height of the card when it is hidden
@@ -27,22 +28,24 @@ public class UI_PlayerTurn : MonoBehaviour
 	[Header("Animation Properties")]
 	[SerializeField] private float m_fNextCardAppearDelay = 0.25f;		// m_fNextCardAppearDelay: The time (in seconds) till the next card is shown in the introduction
 
-	[Header("Tile Selection Properties")]
-	[SerializeField] private ObjectPool m_OPSelection = null;
+	[Header("Object Pooling Properties")]
+	[SerializeField] private ObjectPool m_OPSelection = null;			// m_OPSelection: The reference to the selection boxes' object pool 
+	[SerializeField] private ObjectPool m_OPStep = null;				// m_OPStep: The reference to the steps object pool
+	//[SerializeField] private ObjectPool m_OPStepArrow = null;
 
 	[Header("Other Buttons Properties")]
-	[SerializeField] private Button m_buttonUndo = null;
-	[SerializeField] private Button m_buttonEndTurn = null;
+	[SerializeField] private Button m_buttonUndo = null;				// m_buttonUndo: The reference to the "Undo" button (which is not a child of this gameObject)
+	[SerializeField] private Button m_buttonEndTurn = null;				// m_buttonEndTurn: The reference to the "EndTurn" button (which is not a child of this gameObject)
 
 	// Un-Editable Variables
-	private Button[] marr_buttonCards = null;
-	private Text[] marr_textHeader = null;		// marr_textHeader: The array of the cards' headers
+	private Button[] marr_buttonCards = null;	// marr_buttonCards: The array of reference to the cards (as typeof Button)
+	private Text[] marr_textHeader = null;		// marr_textHeader: The array of reference to the cards' header (as typeof Text)
 	private Text[] marr_textSubheader = null;	// marr_textSubheader: The array of the cards' sub-headers
 	private Transform[] marr_trCards = null;	// marr_trCards: The array of the cards' transforms 
 	private float m_fDefaultYHeight = 0f;		// m_fDefaultYHeight: The initial height of each card before the game runs will determine the default Y height
 
 	private int m_nCurrentSelectCard = -1;
-	private int m_nCurrentTurn = 0;
+	private int m_nCurrentStep = 0;
 	private GameObject[] marr_GOSelection = null;
 	private int[] marr_nCardOrder = null;
 
@@ -146,11 +149,15 @@ public class UI_PlayerTurn : MonoBehaviour
 			// Change the card color
 			ChangeCardColor(_nButtonIndex, m_colorCard, m_colorCardHighlight);
 			// Reduce the turn count by 1
-			m_nCurrentTurn--;
+			m_nCurrentStep--;
 			// Refresh the display
 			TransitionEnter(true, false);
 			return;
 		}
+
+		// if: The player have reached the maximum number of turns
+		if (m_nCurrentStep == m_nMaximumStep)
+			return;
 
 		// if: The card selected is the same card as the previously selected
 		if (m_nCurrentSelectCard == _nButtonIndex)
@@ -213,11 +220,11 @@ public class UI_PlayerTurn : MonoBehaviour
 		for (int i = 0; i < marr_nCardOrder.Length; i++)
 		{
 			// if: Reduce all positions from the order by 1
-			if (marr_nCardOrder[i] == (m_nCurrentTurn - 1))
+			if (marr_nCardOrder[i] == (m_nCurrentStep - 1))
 				marr_nCardOrder[i] = -1;
 		}
-		if (m_nCurrentTurn > 0)
-			m_nCurrentTurn--;
+		if (m_nCurrentStep > 0)
+			m_nCurrentStep--;
 		TransitionEnter(true, false);
 	}
 
@@ -232,9 +239,9 @@ public class UI_PlayerTurn : MonoBehaviour
 		marr_GOSelection = null;
 
 		ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardDeselectHighlight);
-		marr_nCardOrder[m_nCurrentSelectCard] = m_nCurrentTurn;
+		marr_nCardOrder[m_nCurrentSelectCard] = m_nCurrentStep;
 		m_nCurrentSelectCard = -1;
-		m_nCurrentTurn++;
+		m_nCurrentStep++;
 		CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
 		TransitionEnter(true, false);
 	}
@@ -246,7 +253,7 @@ public class UI_PlayerTurn : MonoBehaviour
 	{
 		// Variable Initialisation when it is the player's turn
 		m_nCurrentSelectCard = -1;
-		m_nCurrentTurn = 0;
+		m_nCurrentStep = 0;
 		marr_GOSelection = null;
 		marr_nCardOrder = new int[5];
 		for (int i = 0; i < marr_nCardOrder.Length; i++)
@@ -378,6 +385,13 @@ public class UI_PlayerTurn : MonoBehaviour
 	public static UI_PlayerTurn Instance { get { return ms_Instance; } }
 
 	// Getter-Setter Functions
+	/// <summary>
+	/// Returns a reference to the selection boxes' object pool
+	/// </summary>
 	public ObjectPool ObjectPool_SelectionBox { get { return m_OPSelection; } }
 	
+	/// <summary>
+	/// Returns a reference to the steps' object pool
+	/// </summary>
+	public ObjectPool ObjectPool_Step { get { return m_OPStep; } }
 }
