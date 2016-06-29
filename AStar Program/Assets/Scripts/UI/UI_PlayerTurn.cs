@@ -148,7 +148,7 @@ public class UI_PlayerTurn : MonoBehaviour
 			// Reduce the turn count by 1
 			m_nCurrentTurn--;
 			// Refresh the display
-			TransitionEnter(true);
+			TransitionEnter(true, false);
 			return;
 		}
 
@@ -185,9 +185,9 @@ public class UI_PlayerTurn : MonoBehaviour
 			int worldY = arr_nMovements[i, 1] + LevelManager.Instance.PlayerInstance.Y;
 
 			// if, if: The selection box is within the minimum and maximum level map
-			if (worldX >= 0 || worldX < Level.CurrentLevel.TileLength)
+			if (worldX >= 0 && worldX < Level.CurrentLevel.TileLength)
 			{
-				if (worldY >= 0 || worldY < Level.CurrentLevel.TileLength)
+				if (worldY >= 0 && worldY < Level.CurrentLevel.TileLength)
 				{
 					// if: The selection box is in the generated level map
 					if (LevelManager.Instance.LevelData[worldX, worldY])
@@ -197,7 +197,6 @@ public class UI_PlayerTurn : MonoBehaviour
 						marr_GOSelection[i].GetComponent<SelectionBox>().TransitionEnter();
 						continue;
 					}
-
 				}
 			}
 			// Here is when the selection boxs are out of range
@@ -219,7 +218,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		}
 		if (m_nCurrentTurn > 0)
 			m_nCurrentTurn--;
-		TransitionEnter(true);
+		TransitionEnter(true, false);
 	}
 
 	/// <summary>
@@ -237,7 +236,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		m_nCurrentSelectCard = -1;
 		m_nCurrentTurn++;
 		CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
-		TransitionEnter(true);
+		TransitionEnter(true, false);
 	}
 
 	/// <summary>
@@ -260,7 +259,8 @@ public class UI_PlayerTurn : MonoBehaviour
 	/// Perform the card-entering transition
 	/// </summary>
 	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
-	public void TransitionEnter(bool _bIsAnimate)
+	/// <param name="_bIsDelay"> Determine if there should be delay between each card that is transiting in </param>
+	public void TransitionEnter(bool _bIsAnimate, bool _bIsDelay)
 	{
 		EnumPieceType[] enumCards = LevelManager.Instance.PlayerInstance.CardDeck;
 		for (int i = 0; i < m_nCardCount; i++)
@@ -318,11 +318,21 @@ public class UI_PlayerTurn : MonoBehaviour
 			// if: Animation is allowed
 			if (_bIsAnimate)
 			{
-				DelayAction actDelay = new DelayAction(i * m_fNextCardAppearDelay);
-				LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
-				ActionSequence actSequence = new ActionSequence(actDelay, actMoveToPosition);
+				// if: Delay is allowed
+				if (_bIsDelay)
+				{
+					DelayAction actDelay = new DelayAction(i * m_fNextCardAppearDelay);
+					LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
+					ActionSequence actSequence = new ActionSequence(actDelay, actMoveToPosition);
 
-				ActionHandler.RunAction(actSequence);
+					ActionHandler.RunAction(actSequence);
+				}
+				else
+				{
+					LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
+
+					ActionHandler.RunAction(actMoveToPosition);
+				}
 			}
 			else
 			{

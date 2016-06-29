@@ -111,7 +111,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 
 				// if: The last action completed should activate the next animation
 				if (i == marr_trTitleElement.Length - 1)
-					actSequence.OnActionFinish += () => { UI_PlayerTurn.Instance.TransitionEnter(true); };
+					actSequence.OnActionFinish += () => { UI_PlayerTurn.Instance.TransitionEnter(true, true); };
 
 				ActionHandler.RunAction(actSequence);
 			}
