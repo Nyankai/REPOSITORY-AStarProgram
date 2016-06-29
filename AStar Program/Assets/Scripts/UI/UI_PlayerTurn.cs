@@ -14,7 +14,6 @@ public class UI_PlayerTurn : MonoBehaviour
 	[SerializeField] private Color m_colorCardHighlight = Color.white;	// m_colorCardHighlight: The color of the card highlight
 	[SerializeField] private Color m_colorCardSelect = Color.white;		// m_colorCardSelect: The color of the card when selected
 	[SerializeField] private Color m_colorCardSelectHightlight = Color.white;
-	[SerializeField] private Color m_colorCardDeselectHighlight = Color.white;
 	[SerializeField] private Color m_colorHeader = Color.white;			// m_colorHeader: The color of the card's header
 	[SerializeField] private Color m_colorSubheader = Color.white;		// m_colorSubheader: The color of the card's sub-header
 
@@ -31,7 +30,7 @@ public class UI_PlayerTurn : MonoBehaviour
 	[Header("Object Pooling Properties")]
 	[SerializeField] private ObjectPool m_OPSelection = null;			// m_OPSelection: The reference to the selection boxes' object pool 
 	[SerializeField] private ObjectPool m_OPStep = null;				// m_OPStep: The reference to the steps object pool
-	//[SerializeField] private ObjectPool m_OPStepArrow = null;
+	[SerializeField] private ObjectPool m_OPStepArrow = null;
 
 	[Header("Other Buttons Properties")]
 	[SerializeField] private Button m_buttonUndo = null;				// m_buttonUndo: The reference to the "Undo" button (which is not a child of this gameObject)
@@ -46,6 +45,7 @@ public class UI_PlayerTurn : MonoBehaviour
 
 	private int m_nCurrentSelectCard = -1;
 	private int m_nCurrentStep = 0;
+	private Vector3[] marr_vec3StepPosition = null;		// marr_vec3StepPosition: The array to store all the step's position (0 represents the initial position of the player)
 	private GameObject[] marr_GOSelection = null;
 	private int[] marr_nCardOrder = null;
 
@@ -67,6 +67,9 @@ public class UI_PlayerTurn : MonoBehaviour
 		marr_textHeader = new Text[m_nCardCount];
 		marr_textSubheader = new Text[m_nCardCount];
 		marr_trCards = new Transform[m_nCardCount];
+
+		marr_nCardOrder = new int[5];
+		marr_vec3StepPosition = new Vector3[m_nMaximumStep + 1];
 
 		// for: Every card...
 		for (int i = 0; i < m_nCardCount; i++)
@@ -91,7 +94,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		m_buttonUndo.colors = ChangeButtonColor(m_buttonUndo, m_colorCard, m_colorCardSelect);
 		m_buttonEndTurn.colors = ChangeButtonColor(m_buttonUndo, m_colorCard, m_colorCardSelect);
 
-		TransitionExit(false);
+		TransitionExit(false, false);
 	}
 
 	// ChangeCardColor(): Change the card's color
@@ -122,6 +125,100 @@ public class UI_PlayerTurn : MonoBehaviour
 
 	// Public Functions
 	/// <summary>
+	/// Re-display all the cards, which includes the intro sequence
+	/// </summary>
+	public void BeginSequence()
+	{
+		// Variable Initialisation when it is the player's turn
+		m_nCurrentSelectCard = -1;
+		m_nCurrentStep = 0;
+		marr_GOSelection = null;
+		for (int i = 0; i < marr_nCardOrder.Length; i++)
+			marr_nCardOrder[i] = -1;
+		for (int i = 0; i < marr_vec3StepPosition.Length; i++)
+			marr_vec3StepPosition[i] = Vector3.zero;
+		marr_vec3StepPosition[0] = LevelManager.Instance.PlayerInstance.transform.position;
+
+		UI_PlayerTurnTitle.Instance.TransitionEnter(true);
+	}
+
+	/// <summary>
+	/// End the sequence.
+	/// </summary>
+	public void EndSequence()
+	{
+		// Ending Variables
+		TransitionExit(true, true);
+		for (int i = 0; i < marr_nCardOrder.Length; i++)
+			if (marr_nCardOrder[i] != -1)
+				LevelManager.Instance.PlayerInstance.CardDeck[i] = EnumPieceType.Null;
+
+		// Player Action Handling
+		ActionSequence actSequence = new ActionSequence();
+		for (int i = 1; i <= m_nCurrentStep; i++)
+		{
+			MoveToAction actMoveToNext = new MoveToAction(LevelManager.Instance.PlayerInstance.transform, Graph.InverseExponential, marr_vec3StepPosition[i], 0.25f);
+			actSequence.Add(actMoveToNext);
+		}
+		actSequence.OnActionFinish += () => 
+		{
+			// After-animations Variables Handling
+			m_OPStep.PoolAllObjects();
+			m_OPStepArrow.PoolAllObjects();
+
+			UI_EnemyTurnTitle.Instance.TransitionEnter(true);
+			LevelManager.Instance.ExecuteNextTurn();
+		};
+
+		ActionHandler.RunAction(actSequence);
+	}
+
+	/// <summary>
+	/// CALLED ONLY BY THE UNDO BUTTON. Performs an undo function
+	/// </summary>
+	public void Undo()
+	{
+		// for: Every element in the card order...
+		for (int i = 0; i < marr_nCardOrder.Length; i++)
+		{
+			// if: Reduce all positions from the order by 1
+			if (marr_nCardOrder[i] == (m_nCurrentStep - 1))
+				marr_nCardOrder[i] = -1;
+		}
+		if (m_nCurrentStep > 0)
+		{
+			m_OPSelection.PoolAllObjects();
+			m_nCurrentStep--;
+			UpdateStep();
+			CameraManager.Instance.LookAt(marr_vec3StepPosition[m_nCurrentStep], true);
+		}
+		TransitionEnter(true, false);
+	}
+
+	/// <summary>
+	/// Updates the steps to be displayed
+	/// </summary>
+	public void UpdateStep()
+	{
+		m_OPStep.PoolAllObjects();
+		m_OPStepArrow.PoolAllObjects();
+
+		// if: There is no new steps
+		if (m_nCurrentStep == 0)
+			return;
+
+		GameObject[] arr_GOSteps = m_OPStep.GetObjectsAndReturn(m_nCurrentStep);
+		for (int i = 1; i <= m_nCurrentStep; i++)
+		{
+			arr_GOSteps[i - 1].transform.position = marr_vec3StepPosition[i] + new Vector3(0f, 0.1f, 0f);
+			arr_GOSteps[i - 1].transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+			GameObject GOArrowStep = m_OPStepArrow.GetObjectAndReturn();
+			GOArrowStep.GetComponent<UI_StepArrow>().Initialisation(marr_vec3StepPosition[i - 1], marr_vec3StepPosition[i]);
+		}
+	}
+
+	/// <summary>
 	/// CALLED ONLY BE THE CARDS. This method handles what happens on the button presses
 	/// </summary>
 	/// <param name="_nButtonIndex"> The index position of the button, based on child hiearchy </param>
@@ -136,24 +233,7 @@ public class UI_PlayerTurn : MonoBehaviour
 
 		// if: The current card have been registered as a step
 		if (marr_nCardOrder[_nButtonIndex] != -1)
-		{
-			// for: Every card's card order...
-			for (int i = 0; i < marr_nCardOrder.Length; i++)
-			{
-				// if: The current card order is greater than selected, reduce its position by one
-				if (marr_nCardOrder[i] > marr_nCardOrder[_nButtonIndex])
-					marr_nCardOrder[i]--;
-			}
-			// Removes the select card order
-			marr_nCardOrder[_nButtonIndex] = -1;
-			// Change the card color
-			ChangeCardColor(_nButtonIndex, m_colorCard, m_colorCardHighlight);
-			// Reduce the turn count by 1
-			m_nCurrentStep--;
-			// Refresh the display
-			TransitionEnter(true, false);
 			return;
-		}
 
 		// if: The player have reached the maximum number of turns
 		if (m_nCurrentStep == m_nMaximumStep)
@@ -166,7 +246,7 @@ public class UI_PlayerTurn : MonoBehaviour
 			m_nCurrentSelectCard = -1;
 			m_OPSelection.PoolAllObjects();
 
-			CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
+			CameraManager.Instance.LookAt(marr_vec3StepPosition[m_nCurrentStep], true);
 			return;
 		}
 		// else if: The card selected previously is not the same as this card
@@ -180,16 +260,23 @@ public class UI_PlayerTurn : MonoBehaviour
 		ChangeCardColor(_nButtonIndex, m_colorCardSelect, m_colorCardSelectHightlight);
 		m_nCurrentSelectCard = _nButtonIndex;
 
-		CameraManager.Instance.ZoomInAt(LevelManager.Instance.PlayerInstance.transform, true);
+		CameraManager.Instance.ZoomInAt(marr_vec3StepPosition[m_nCurrentStep], true);
 
 		// Selection Handling
+		// arr_nMovements: The selection boxes in local grid from the target
 		int[,] arr_nMovements = Movement.GetMovementType(LevelManager.Instance.PlayerInstance.CardDeck[m_nCurrentSelectCard]);
 		marr_GOSelection = m_OPSelection.GetObjectsAndReturn(arr_nMovements.GetLength(0));
 		// for: Every selection tile...
 		for (int i = 0; i < marr_GOSelection.Length; i++)
 		{
-			int worldX = arr_nMovements[i, 0] + LevelManager.Instance.PlayerInstance.X;
-			int worldY = arr_nMovements[i, 1] + LevelManager.Instance.PlayerInstance.Y;
+			// Converts the current step world position to grid coords
+			int[] arr_nCurrentStepCoords = new int[2];
+			arr_nCurrentStepCoords[0] = Mathf.RoundToInt(marr_vec3StepPosition[m_nCurrentStep].x);
+			arr_nCurrentStepCoords[1] = Mathf.RoundToInt(marr_vec3StepPosition[m_nCurrentStep].z);
+
+			// worldX, worldY: Selection box in the world-grid
+			int worldX = arr_nMovements[i, 0] + arr_nCurrentStepCoords[0];
+			int worldY = arr_nMovements[i, 1] + arr_nCurrentStepCoords[1];
 
 			// if, if: The selection box is within the minimum and maximum level map
 			if (worldX >= 0 && worldX < Level.CurrentLevel.TileLength)
@@ -212,54 +299,29 @@ public class UI_PlayerTurn : MonoBehaviour
 	}
 
 	/// <summary>
-	/// CALLED ONLY BY THE UNDO BUTTON. Performs an undo function
-	/// </summary>
-	public void Undo()
-	{
-		// for: Every element in the card order...
-		for (int i = 0; i < marr_nCardOrder.Length; i++)
-		{
-			// if: Reduce all positions from the order by 1
-			if (marr_nCardOrder[i] == (m_nCurrentStep - 1))
-				marr_nCardOrder[i] = -1;
-		}
-		if (m_nCurrentStep > 0)
-			m_nCurrentStep--;
-		TransitionEnter(true, false);
-	}
-
-	/// <summary>
 	/// CALLED ONLY BY THE SELECTION. This method handles what happens after the user have selected a selection
 	/// </summary>
-	public void SelectionClick()
+	public void SelectionClick(Vector3 _vec3NewPosition)
 	{
 		// for: Every selection, perform exit-transition (This will not override the select-transition)
 		for (int i = 0; i < marr_GOSelection.Length; i++)
 			marr_GOSelection[i].GetComponent<SelectionBox>().TransitionExit();
 		marr_GOSelection = null;
 
-		ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardDeselectHighlight);
+		// Change the card color back to normal
+		ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardHighlight);
+		// Updates the card step array
 		marr_nCardOrder[m_nCurrentSelectCard] = m_nCurrentStep;
+		// Deselects all the cards
 		m_nCurrentSelectCard = -1;
+
+		// Update the step count
 		m_nCurrentStep++;
-		CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
+		// Add new step position for step count
+		marr_vec3StepPosition[m_nCurrentStep] = _vec3NewPosition;
+		UpdateStep();
+		CameraManager.Instance.LookAt(marr_vec3StepPosition[m_nCurrentStep], true);
 		TransitionEnter(true, false);
-	}
-
-	/// <summary>
-	/// Re-display all the cards, which includes the intro sequence
-	/// </summary>
-	public void BeginSequence()
-	{
-		// Variable Initialisation when it is the player's turn
-		m_nCurrentSelectCard = -1;
-		m_nCurrentStep = 0;
-		marr_GOSelection = null;
-		marr_nCardOrder = new int[5];
-		for (int i = 0; i < marr_nCardOrder.Length; i++)
-			marr_nCardOrder[i] = -1;
-
-		UI_PlayerTurnTitle.Instance.TransitionEnter(true);
 	}
 
 	/// <summary>
@@ -352,8 +414,14 @@ public class UI_PlayerTurn : MonoBehaviour
 	/// Perform a card-exiting transition
 	/// </summary>
 	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
-	public void TransitionExit(bool _bIsAnimate)
+	public void TransitionExit(bool _bIsAnimate, bool _bIsTransitTitle)
 	{
+		// if: Title is not transiting
+		if (_bIsTransitTitle)
+		{
+			UI_PlayerTurnTitle.Instance.TransitionExit(_bIsAnimate);
+		}
+
 		// for: Every card...
 		for (int i = 0; i < m_nCardCount; i++)
 		{
@@ -394,4 +462,6 @@ public class UI_PlayerTurn : MonoBehaviour
 	/// Returns a reference to the steps' object pool
 	/// </summary>
 	public ObjectPool ObjectPool_Step { get { return m_OPStep; } }
+
+	public Vector3 CurrentStepPosition { get { return marr_vec3StepPosition[m_nCurrentStep]; } }
 }

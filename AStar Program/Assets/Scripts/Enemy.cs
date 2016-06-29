@@ -20,6 +20,12 @@ public class Enemy : Character
 		// if: The next node is the player, use a different attacking animation
 		if (m_AStar.StartNode.linkTo == m_AStar.TargetNode)
 		{
+			// Variables Updates
+			int[] arr_nCoords = m_AStar.Position2GridCoords(m_AStar.TargetNode.position);
+			m_nX = arr_nCoords[0];
+			m_nY = arr_nCoords[1];
+
+			// Action Handling
 			MoveToAction action_HitFirst = new MoveToAction(this.transform, m_AStar.TargetNode.position, 0.1f);
 			MoveToAction action_HitSecond = new MoveToAction(this.transform, Graph.Exponential, m_AStar.StartNode.position, 0.4f);
 			ActionSequence actionSeq_Hit = new ActionSequence(action_HitFirst, action_HitSecond);
@@ -30,10 +36,23 @@ public class Enemy : Character
 		// else: Use the move animation
 		else
 		{
-			MoveToAction action_MoveTo = new MoveToAction(this.transform, Graph.InverseExponential, m_AStar.StartNode.linkTo.position, 0.5f);
-			action_MoveTo.OnActionFinish += LevelManager.Instance.ExecuteNextTurn;
+			try
+			{
+				// Variables Updates
+				int[] arr_nCoords = m_AStar.Position2GridCoords(m_AStar.StartNode.linkTo.position);
+				m_nX = arr_nCoords[0];
+				m_nY = arr_nCoords[1];
 
-			ActionHandler.RunAction(action_MoveTo);
+				// Action Handling
+				MoveToAction action_MoveTo = new MoveToAction(this.transform, Graph.InverseExponential, m_AStar.StartNode.linkTo.position, 0.5f);
+				action_MoveTo.OnActionFinish += LevelManager.Instance.ExecuteNextTurn;
+
+				ActionHandler.RunAction(action_MoveTo);
+			}
+			catch (System.NullReferenceException)
+			{
+				Debug.Log("This is causing it!", this.gameObject);
+			}
 		}
 	}
 

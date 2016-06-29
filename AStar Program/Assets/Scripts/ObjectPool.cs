@@ -77,6 +77,9 @@ public class ObjectPool : MonoBehaviour
 	/// <returns> Returns the objects in an array </returns>
 	public GameObject[] GetObjectsAndReturn(int _nGetCount)
 	{
+		if (_nGetCount <= 0)
+			return null;
+
 		List<GameObject> list_GOObjects = new List<GameObject>();
 		for (int i = 0; i < marr_GOObjectPool.Length; i++)
 		{
@@ -108,6 +111,7 @@ public class ObjectPool : MonoBehaviour
 				marr_GOObjectPool[i].SetActive(false);
 				marr_GOObjectPool[i].transform.position = Vector3.zero;
 				marr_GOObjectPool[i].transform.rotation = Quaternion.identity;
+				marr_GOObjectPool[i].transform.localScale = Vector3.one;
 				return true;
 			}
 		}
@@ -124,6 +128,7 @@ public class ObjectPool : MonoBehaviour
 			marr_GOObjectPool[i].SetActive(false);
 			marr_GOObjectPool[i].transform.position = Vector3.zero;
 			marr_GOObjectPool[i].transform.rotation = Quaternion.identity;
+			marr_GOObjectPool[i].transform.localScale = Vector3.one;
 		}
 	}
 }

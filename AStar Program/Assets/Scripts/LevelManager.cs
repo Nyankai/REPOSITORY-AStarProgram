@@ -153,12 +153,12 @@ public class LevelManager : MonoBehaviour
 		// for: Every registered character in the list...
 		for (int i = 0; i < mList_Character.Count; i++)
 		{
-				// if: No character type is specified
-				if (_enumCharacter == EnumCharacterType.Null)
-					arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
-				// else if: A certain character type is specified
-				else if (mList_Character[i].CharacterType == _enumCharacter)
-					arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
+			// if: No character type is specified
+			if (_enumCharacter == EnumCharacterType.Null)
+				arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
+			// else if: A certain character type is specified
+			else if (mList_Character[i].CharacterType == _enumCharacter)
+				arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
 		}
 
 		return arr2_characterConstrain;

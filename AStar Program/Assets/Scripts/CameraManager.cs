@@ -85,9 +85,8 @@ public class CameraManager : MonoBehaviour
 				if (Input.GetMouseButtonDown(0))
 				{
 					m_selectionBoxPrevious.TransitionSelect();
-					UI_PlayerTurn.Instance.SelectionClick();
+					UI_PlayerTurn.Instance.SelectionClick(m_selectionBoxPrevious.transform.position);
 				}
-
 			}
 		}
 		else

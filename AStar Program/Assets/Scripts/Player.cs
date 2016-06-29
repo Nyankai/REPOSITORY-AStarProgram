@@ -17,6 +17,7 @@ public class Player : Character
 	{
 		UI_EnemyTurnTitle.Instance.TransitionExit(true);
 		DrawCard(1);
+
 		UI_PlayerTurn.Instance.BeginSequence();
 	}
 
@@ -33,7 +34,7 @@ public class Player : Character
 		m_enumCards = new EnumPieceType[5];
 		for (int i = 0; i < m_enumCards.Length; i++)
 			m_enumCards[i] = EnumPieceType.Null;
-		DrawCard(4);
+		DrawCard(2);
 	}
 
 	// Public Functions
@@ -119,5 +120,5 @@ public class Player : Character
 	/// <summary>
 	/// Returns the player's card deck
 	/// </summary>
-	public EnumPieceType[] CardDeck { get { return m_enumCards; } }
+	public EnumPieceType[] CardDeck { get { return m_enumCards; } set { m_enumCards = value; } }
 }
