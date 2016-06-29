@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 public class ObjectPool : MonoBehaviour 
 {
@@ -26,7 +26,7 @@ public class ObjectPool : MonoBehaviour
 
 	// Public Functions
 	/// <summary>
-	/// Returns an available object in the array
+	/// Returns an available object in the object pool
 	/// </summary>
 	/// <param name="_GOObject"> The reference to the object that is going to get from the object pool, returns null if all is used </param>
 	/// <returns> Returns there is an object gotten from the object pool </returns>
@@ -40,7 +40,7 @@ public class ObjectPool : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Returns an available object in the array
+	/// Returns an available object in the object pool
 	/// </summary>
 	/// <returns> The reference to the object that is going to get from the object pool, returns null if all is used </returns>
 	public GameObject GetObjectAndReturn()
@@ -54,6 +54,44 @@ public class ObjectPool : MonoBehaviour
 			}
 		}
 		return null;
+	}
+
+	/// <summary>
+	/// Returns a number of available object in the object pool
+	/// </summary>
+	/// <param name="_arr_GOObjects"> The reference to the objects that is going to get from the object pool </param>
+	/// <returns> Returns if it retrieves the same number of objects as requested </returns>
+	public bool GetObjects(int _nGetCount, out GameObject[] _arr_GOObjects)
+	{
+		_arr_GOObjects = GetObjectsAndReturn(_nGetCount);
+		if (_nGetCount == _arr_GOObjects.Length)
+			return true;
+		else
+			return false;
+	}
+
+	/// <summary>
+	/// Returns a number of available object in the object pool
+	/// </summary>
+	/// <param name="_nGetCount"> The number of objects to be retrived </param>
+	/// <returns> Returns the objects in an array </returns>
+	public GameObject[] GetObjectsAndReturn(int _nGetCount)
+	{
+		List<GameObject> list_GOObjects = new List<GameObject>();
+		for (int i = 0; i < marr_GOObjectPool.Length; i++)
+		{
+			if (!marr_GOObjectPool[i].activeSelf)
+			{
+				marr_GOObjectPool[i].SetActive(true);
+				list_GOObjects.Add(marr_GOObjectPool[i]);
+
+				// if: The list reaches the number of items needed
+				if (list_GOObjects.Count == _nGetCount)
+					return list_GOObjects.ToArray();
+			}
+		}
+		Debug.Log(name + ".ObjectPool.GetObjectsAndReturn(): You have exhausted the pool! (Consider increasing the limit?)");
+		return list_GOObjects.ToArray();
 	}
 
 	/// <summary>
@@ -74,5 +112,18 @@ public class ObjectPool : MonoBehaviour
 			}
 		}
 		return false;
+	}
+
+	/// <summary>
+	/// Pool all the objects back into the object pool
+	/// </summary>
+	public void PoolAllObjects()
+	{
+		for (int i = 0; i < marr_GOObjectPool.Length; i++)
+		{
+			marr_GOObjectPool[i].SetActive(false);
+			marr_GOObjectPool[i].transform.position = Vector3.zero;
+			marr_GOObjectPool[i].transform.rotation = Quaternion.identity;
+		}
 	}
 }

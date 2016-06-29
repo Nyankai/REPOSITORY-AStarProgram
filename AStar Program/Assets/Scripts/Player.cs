@@ -15,7 +15,7 @@ public class Player : Character
 	// Protected Functions
 	public override void ExecuteTurn()
 	{
-		m_bIsExecuteTurn = true;
+		DrawCard(1);
 		UI_PlayerTurn.Instance.BeginSequence();
 	}
 
@@ -33,16 +33,6 @@ public class Player : Character
 		for (int i = 0; i < m_enumCards.Length; i++)
 			m_enumCards[i] = EnumPieceType.Null;
 		DrawCard(2);
-	}
-
-	// Update(): is called once every frame
-	void Update()
-	{
-		if (!m_bIsExecuteTurn)
-			return;
-
-		DrawCard(1);
-		m_bIsExecuteTurn = false;
 	}
 
 	// Public Functions

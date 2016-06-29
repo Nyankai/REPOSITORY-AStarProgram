@@ -14,6 +14,7 @@ public class UI_PlayerTurn : MonoBehaviour
 	[SerializeField] private Color m_colorCardHighlight = Color.white;	// m_colorCardHighlight: The color of the card highlight
 	[SerializeField] private Color m_colorCardSelect = Color.white;		// m_colorCardSelect: The color of the card when selected
 	[SerializeField] private Color m_colorCardSelectHightlight = Color.white;
+	[SerializeField] private Color m_colorCardDeselectHighlight = Color.white;
 	[SerializeField] private Color m_colorHeader = Color.white;			// m_colorHeader: The color of the card's header
 	[SerializeField] private Color m_colorSubheader = Color.white;		// m_colorSubheader: The color of the card's sub-header
 
@@ -37,7 +38,10 @@ public class UI_PlayerTurn : MonoBehaviour
 	private float m_fDefaultYHeight = 0f;		// m_fDefaultYHeight: The initial height of each card before the game runs will determine the default Y height
 
 	private int m_nCurrentSelectCard = -1;
-	
+	private int m_nCurrentTurn = 0;
+	private GameObject[] marr_GOSelection = null;
+	private int[] marr_nCardOrder = null;
+
 	// Private Functions
 	// Awake(): is called when the script is first initialised
 	void Awake()
@@ -109,11 +113,33 @@ public class UI_PlayerTurn : MonoBehaviour
 			return;
 		}
 
+		// if: The current card have been registered as a step
+		if (marr_nCardOrder[_nButtonIndex] != -1)
+		{
+			// for: Every card's card order...
+			for (int i = 0; i < marr_nCardOrder.Length; i++)
+			{
+				// if: The current card order is greater than selected, reduce its position by one
+				if (marr_nCardOrder[i] > marr_nCardOrder[_nButtonIndex])
+					marr_nCardOrder[i]--;
+			}
+			// Removes the select card order
+			marr_nCardOrder[_nButtonIndex] = -1;
+			// Change the card color
+			ChangeCardColor(_nButtonIndex, m_colorCard, m_colorCardHighlight);
+			// Reduce the turn count by 1
+			m_nCurrentTurn--;
+			// Refresh the display
+			TransitionEnter(true);
+			return;
+		}
+
 		// if: The card selected is the same card as the previously selected
 		if (m_nCurrentSelectCard == _nButtonIndex)
 		{
 			ChangeCardColor(_nButtonIndex, m_colorCard, m_colorCardHighlight);
 			m_nCurrentSelectCard = -1;
+			m_OPSelection.PoolAllObjects();
 
 			CameraManager.Instance.LookAt(CameraManager.Instance.transform.position, true);
 			return;
@@ -123,6 +149,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		{
 			ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardHighlight);
 			m_nCurrentSelectCard = -1;
+			m_OPSelection.PoolAllObjects();
 		}
 		// else: (same condition with else if) There is no card selected initialy
 		ChangeCardColor(_nButtonIndex, m_colorCardSelect, m_colorCardSelectHightlight);
@@ -131,6 +158,32 @@ public class UI_PlayerTurn : MonoBehaviour
 		CameraManager.Instance.ZoomInAt(LevelManager.Instance.PlayerInstance.transform, true);
 
 		// Selection Handling
+		int[,] arr_nMovements = Movement.GetMovementType(LevelManager.Instance.PlayerInstance.CardDeck[m_nCurrentSelectCard]);
+		marr_GOSelection = m_OPSelection.GetObjectsAndReturn(arr_nMovements.GetLength(0));
+		// for: Every selection tile...
+		for (int i = 0; i < marr_GOSelection.Length; i++)
+		{
+			// Set its grid-coords
+			marr_GOSelection[i].GetComponent<SelectionBox>().SetGridCoords(arr_nMovements[i, 0], arr_nMovements[i, 1]);
+			marr_GOSelection[i].GetComponent<SelectionBox>().TransitionEnter();
+		}
+	}
+
+	/// <summary>
+	/// CALLED ONLY BY THE SELECTION. This method handles what happens after the user have selected a selection
+	/// </summary>
+	public void SelectionClick()
+	{
+		// for: Every selection, perform exit-transition (This will not override the select-transition)
+		for (int i = 0; i < marr_GOSelection.Length; i++)
+			marr_GOSelection[i].GetComponent<SelectionBox>().TransitionExit();
+		marr_GOSelection = null;
+
+		ChangeCardColor(m_nCurrentSelectCard, m_colorCard, m_colorCardDeselectHighlight);
+		marr_nCardOrder[m_nCurrentSelectCard] = m_nCurrentTurn;
+		m_nCurrentSelectCard = -1;
+		m_nCurrentTurn++;
+		TransitionEnter(true);
 	}
 
 	/// <summary>
@@ -138,6 +191,14 @@ public class UI_PlayerTurn : MonoBehaviour
 	/// </summary>
 	public void BeginSequence()
 	{
+		// Variable Initialisation when it is the player's turn
+		m_nCurrentSelectCard = -1;
+		m_nCurrentTurn = 0;
+		marr_GOSelection = null;
+		marr_nCardOrder = new int[5];
+		for (int i = 0; i < marr_nCardOrder.Length; i++)
+			marr_nCardOrder[i] = -1;
+
 		UI_PlayerTurnTitle.Instance.TransitionEnter(true);
 	}
 
@@ -147,8 +208,6 @@ public class UI_PlayerTurn : MonoBehaviour
 	/// <param name="_bIsAnimate"> Determine if the transition should be animated (or snapped into place) </param>
 	public void TransitionEnter(bool _bIsAnimate)
 	{
-		TransitionExit(false);
-
 		EnumPieceType[] enumCards = LevelManager.Instance.PlayerInstance.CardDeck;
 		for (int i = 0; i < m_nCardCount; i++)
 		{
@@ -159,7 +218,7 @@ public class UI_PlayerTurn : MonoBehaviour
 				case EnumPieceType.Null:
 					// Set-up the card's display
 					marr_textHeader[i].text = "NAME";
-					marr_textSubheader[i].text = " ";
+					marr_textSubheader[i].text = "...";
 
 					// Set the current card to the hidden position
 					vec3NewCardPosition = marr_trCards[i].localPosition;
@@ -169,9 +228,36 @@ public class UI_PlayerTurn : MonoBehaviour
 					// Set-up the card's display
 					marr_textHeader[i].text = enumCards[i].ToString();
 
-					// Set the current card to the display position
-					vec3NewCardPosition = marr_trCards[i].localPosition;
-					vec3NewCardPosition.y = m_fDefaultYHeight - m_fDisplayHeight;
+					// if: The current card does not have a card order
+					if (marr_nCardOrder[i] == -1)
+					{
+						// Set the current card to the display position
+						vec3NewCardPosition = marr_trCards[i].localPosition;
+						vec3NewCardPosition.y = m_fDefaultYHeight - m_fDisplayHeight;
+					}
+					else
+					{
+						// switch: Based on the card order to determine card's sub-header data
+						switch (marr_nCardOrder[i])
+						{
+							case 0:
+								marr_textSubheader[i].text = "1st"; 
+								break;
+							case 1:
+								marr_textSubheader[i].text = "2nd";
+								break;
+							case 2:
+								marr_textSubheader[i].text = "3rd";
+								break;
+							default:
+								Debug.LogWarning(name + ".UI_PlayerTurn.TransitionEnter(): Not registered marr_nCardOrder[i]! marr_nCardOrder[i]: " + marr_nCardOrder[i]);
+								break;
+						}
+
+						// Set the current card to the display position
+						vec3NewCardPosition = marr_trCards[i].localPosition;
+						vec3NewCardPosition.y = m_fDefaultYHeight - m_fSelectedHeight;
+					}
 					break;
 			}
 
@@ -181,6 +267,7 @@ public class UI_PlayerTurn : MonoBehaviour
 				DelayAction actDelay = new DelayAction(i * m_fNextCardAppearDelay);
 				LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
 				ActionSequence actSequence = new ActionSequence(actDelay, actMoveToPosition);
+
 				ActionHandler.RunAction(actSequence);
 			}
 			else
@@ -201,7 +288,7 @@ public class UI_PlayerTurn : MonoBehaviour
 		{
 			// Set-up the card's display
 			marr_textHeader[i].text = "NAME";
-			marr_textSubheader[i].text = " ";
+			marr_textSubheader[i].text = "...";
 
 			// Set the current card to the hidden position
 			Vector3 vec3NewHidePosition = marr_trCards[i].localPosition;
@@ -227,5 +314,6 @@ public class UI_PlayerTurn : MonoBehaviour
 	public static UI_PlayerTurn Instance { get { return ms_Instance; } }
 
 	// Getter-Setter Functions
+	public ObjectPool ObjectPool_SelectionBox { get { return m_OPSelection; } }
 	
 }

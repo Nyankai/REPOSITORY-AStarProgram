@@ -18,6 +18,7 @@ public class CameraManager : MonoBehaviour
 
 	// Un-editable Variables
 	private Vector3 m_vec3CameraDirection = Vector3.zero;			// m_vec3CameraDirection: The vector in which the camera is facing
+	private SelectionBox m_selectionBoxPrevious = null;
 
 	private bool m_bIsTransiting = false;
 	private bool m_bIsZoom = false;
@@ -52,6 +53,52 @@ public class CameraManager : MonoBehaviour
 
 		// Position Initialisation
 		m_trCamera.position = -m_vec3CameraDirection * m_fDefaultZoomDistance;
+	}
+
+	// Update(): is called once per frame
+	void Update()
+	{
+ 		RaycastHit hitRaycast;
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitRaycast))
+		{
+			// if: The hitpoint of the raycast is a selection box
+			if (hitRaycast.transform.CompareTag("SelectionBox"))
+			{
+				// if: There is a previous selection box
+				if (m_selectionBoxPrevious != null)
+				{
+					// if: The current selection box is not the same as the previous selection box
+					if (hitRaycast.transform != m_selectionBoxPrevious.transform)
+					{
+						m_selectionBoxPrevious.ColorNormal();
+						m_selectionBoxPrevious = hitRaycast.transform.GetComponent<SelectionBox>();
+						m_selectionBoxPrevious.ColorHightlight();
+					}
+				}
+				else
+				{
+					m_selectionBoxPrevious = hitRaycast.transform.GetComponent<SelectionBox>();
+					m_selectionBoxPrevious.ColorHightlight();
+				}
+
+				// if: The player clicks on one of the selection box
+				if (Input.GetMouseButtonDown(0))
+				{
+					m_selectionBoxPrevious.TransitionSelect();
+					UI_PlayerTurn.Instance.SelectionClick();
+				}
+
+			}
+		}
+		else
+		{
+			// if: There is a selection box in the previous frame (but not this)
+			if (m_selectionBoxPrevious != null)
+			{
+				m_selectionBoxPrevious.ColorNormal();
+				m_selectionBoxPrevious = null;
+			}
+		}
 	}
 
 	// Public Functions
