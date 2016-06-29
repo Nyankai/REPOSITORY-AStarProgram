@@ -33,7 +33,7 @@ public class Player : Character
 		m_enumCards = new EnumPieceType[5];
 		for (int i = 0; i < m_enumCards.Length; i++)
 			m_enumCards[i] = EnumPieceType.Null;
-		DrawCard(2);
+		DrawCard(4);
 	}
 
 	// Public Functions

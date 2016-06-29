@@ -78,21 +78,35 @@ public class LevelManager : MonoBehaviour
 		{
 			int x = (int)(UnityEngine.Random.value * (float)m_nLevelLength);
 			int y = (int)(UnityEngine.Random.value * (float)m_nLevelLength);
-
+			
+			// if: The current character type is enemy
 			if (_characterType.CharacterType == EnumCharacterType.Enemy)
 			{
 				// if: There is a tile at position [x, y]
 				if (marr2_levelData[x, y])
-				{
-					_characterType.transform.position = _characterType.AStarInstance.GridIndex2Position(x, y);
-					_characterType.X = x;
-					_characterType.Y = y;
-					bIsFoundPlace = true;
-				}
+					// if: The current slot is taken by another piece
+					if (GetCharacterConstrain(EnumCharacterType.Null)[x, y])
+					{
+						_characterType.transform.position = _characterType.AStarInstance.GridIndex2Position(x, y);
+						_characterType.X = x;
+						_characterType.Y = y;
+						bIsFoundPlace = true;
+					}
 			}
 			// else: If the character type is typeof Player
 			else
-				bIsFoundPlace = true;
+			{
+				// if: There is a tile at position [x, y]
+				if (marr2_levelData[x, y])
+					// if: The current slot is taken by another piece
+					if (GetCharacterConstrain(EnumCharacterType.Null)[x, y])
+					{
+						_characterType.transform.position = new Vector3((float)x, 0f, (float)y);
+						_characterType.X = x;
+						_characterType.Y = y;
+						bIsFoundPlace = true;
+					}
+			}
 
 		} while (!bIsFoundPlace);
 
@@ -139,12 +153,12 @@ public class LevelManager : MonoBehaviour
 		// for: Every registered character in the list...
 		for (int i = 0; i < mList_Character.Count; i++)
 		{
-			// if: No character type is specified
-			if (_enumCharacter == EnumCharacterType.Null)
-				arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
-			// else if: A certain character type is specified
-			else if (mList_Character[i].CharacterType == _enumCharacter)
-				arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
+				// if: No character type is specified
+				if (_enumCharacter == EnumCharacterType.Null)
+					arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
+				// else if: A certain character type is specified
+				else if (mList_Character[i].CharacterType == _enumCharacter)
+					arr2_characterConstrain[mList_Character[i].X, mList_Character[i].Y] = false;
 		}
 
 		return arr2_characterConstrain;

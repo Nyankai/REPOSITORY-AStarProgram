@@ -181,9 +181,27 @@ public class UI_PlayerTurn : MonoBehaviour
 		// for: Every selection tile...
 		for (int i = 0; i < marr_GOSelection.Length; i++)
 		{
-			// Set its grid-coords
-			marr_GOSelection[i].GetComponent<SelectionBox>().SetGridCoords(arr_nMovements[i, 0], arr_nMovements[i, 1]);
-			marr_GOSelection[i].GetComponent<SelectionBox>().TransitionEnter();
+			int worldX = arr_nMovements[i, 0] + LevelManager.Instance.PlayerInstance.X;
+			int worldY = arr_nMovements[i, 1] + LevelManager.Instance.PlayerInstance.Y;
+
+			// if, if: The selection box is within the minimum and maximum level map
+			if (worldX >= 0 || worldX < Level.CurrentLevel.TileLength)
+			{
+				if (worldY >= 0 || worldY < Level.CurrentLevel.TileLength)
+				{
+					// if: The selection box is in the generated level map
+					if (LevelManager.Instance.LevelData[worldX, worldY])
+					{
+						// Set its grid-coords
+						marr_GOSelection[i].GetComponent<SelectionBox>().SetGridCoords(arr_nMovements[i, 0], arr_nMovements[i, 1]);
+						marr_GOSelection[i].GetComponent<SelectionBox>().TransitionEnter();
+						continue;
+					}
+
+				}
+			}
+			// Here is when the selection boxs are out of range
+			m_OPSelection.PoolObject(marr_GOSelection[i]);
 		}
 	}
 

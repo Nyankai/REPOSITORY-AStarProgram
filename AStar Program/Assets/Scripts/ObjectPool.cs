@@ -103,7 +103,7 @@ public class ObjectPool : MonoBehaviour
 	{
 		for (int i = 0; i < marr_GOObjectPool.Length; i++)
 		{
-			if (marr_GOObjectPool[i] == _GOObject)
+			if (marr_GOObjectPool[i].GetInstanceID() == _GOObject.GetInstanceID())
 			{
 				marr_GOObjectPool[i].SetActive(false);
 				marr_GOObjectPool[i].transform.position = Vector3.zero;
