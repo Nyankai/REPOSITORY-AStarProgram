@@ -2,7 +2,6 @@
 using UnityEditor;
 
 [CustomEditor(typeof(Level))]
-[CanEditMultipleObjects]
 public class LevelEditor : Editor 
 {
 	// Editor Instances

@@ -90,31 +90,24 @@ public class Player : Character
 		int nNextEmptySlot = -1;
 		for (int i = 0; i < m_enumCards.Length; i++)
 		{
-			switch (m_enumCards[i])
+			// if: The current slot is an empty slot
+			if (m_enumCards[i] == EnumPieceType.Null)
 			{
- 				case EnumPieceType.Null:
-					// if: There is no empty slot found, then this will be the new empty slot
-					if (nNextEmptySlot == -1)
-						nNextEmptySlot = i;
-					break;
-				default:
-					// if: There is no new empty slots
-					if (nNextEmptySlot == -1)
-						continue;
-
-					// Moves the card to the new empty slot
-					m_enumCards[nNextEmptySlot] = m_enumCards[i];
-					m_enumCards[i] = EnumPieceType.Null;
-					nNextEmptySlot = -1;
-
-					// for: Finds a new empty slot (Note: Although the current slot is empty, there might be other empty slots infront)
-					for (int j = 0; j < m_enumCards.Length; j++)
-						if (m_enumCards[i] == EnumPieceType.Null)
-						{
-							nNextEmptySlot = i;
-							break;
-						}
-					break;
+				m_nNextAvailableSlot = i;
+				// for: Traverse through the rest of the array and find a card
+				for (int j = i; j < m_enumCards.Length; j++)
+				{
+					// if: It is not an empty card, swap the card
+					if (m_enumCards[j] != EnumPieceType.Null)
+					{
+						m_enumCards[i] = m_enumCards[j];
+						m_enumCards[j] = EnumPieceType.Null;
+						break;
+					}
+					// else if: it is the last card and there is no more empty card left
+					else if (j == m_enumCards.Length - 1)
+						return;
+				}
 			}
 		}
 		// Determine the next empty slot as a class scope

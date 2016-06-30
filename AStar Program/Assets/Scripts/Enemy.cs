@@ -26,7 +26,7 @@ public class Enemy : Character
 			MoveToAction actJump1 = new MoveToAction(transform, Graph.InverseExponential, m_AStar.TargetNode.position + new Vector3(0f, 2f, 0f), 0.5f);
 			actJump1.OnActionStart += () =>
 			{
-				CameraManager.Instance.ZoomInAt(LevelManager.Instance.PlayerInstance.transform.position + new Vector3(0f, 1f, 0f), true);
+				CameraManager.Instance.ZoomInAt(LevelManager.Instance.PlayerInstance.transform.position + new Vector3(0f, 1f), true);
 			};
 			MoveToAction actSlam = new MoveToAction(transform, Graph.Exponential, m_AStar.TargetNode.position, 0.1f);
 			MoveToAction actJump2 = new MoveToAction(transform, Graph.InverseExponential, m_AStar.StartNode.position, 0.5f);
@@ -75,9 +75,9 @@ public class Enemy : Character
 		LevelManager.Instance.RemoveCharacter(this as Character);
 	}
 
-	// Private Functions
-	// Awake(): is called when the script is initialised
-	void Awake()
+	// Public Functions
+	// Initialise(): is called when the script is initialised
+	public void Initialise()
 	{
 		m_nX = -1;
 		m_nY = -1;
@@ -86,7 +86,6 @@ public class Enemy : Character
 		LevelManager.Instance.AddCharacter(this);
 	}
 
-	// Public Functions
 	/// <summary>
 	/// A function to call the AStar of the enemy
 	/// </summary>

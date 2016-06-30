@@ -2,7 +2,6 @@
 using UnityEditor;
 
 [CustomEditor(typeof(AStar))]
-[CanEditMultipleObjects]
 public class AStarEditor : Editor 
 {
 	// SerializedProperty Variables

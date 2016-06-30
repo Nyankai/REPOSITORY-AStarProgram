@@ -9,6 +9,8 @@ public class LevelManager : MonoBehaviour
 	// Editable Variables
 	[SerializeField] private GameObject mGO_Tiles = null;
 	[SerializeField] private Color m_ColorDarkTiles = Color.black;
+	[SerializeField] private int m_nEnemyStartCount = 20;
+	[SerializeField] private GameObject[] marr_GOEnemyTypes = null;
 
 	// Un-editable Variables
 	private bool[,] marr2_levelData = null;				// marr2_levelData: The level data of the current level
@@ -53,6 +55,13 @@ public class LevelManager : MonoBehaviour
 	// Start(): Use this for initialisation
 	void Start()
 	{
+		// Generate random enemies
+		for (int i = 0; i < m_nEnemyStartCount; i++)
+		{
+			GameObject GOEnemy = Instantiate(marr_GOEnemyTypes[UnityEngine.Random.Range(0, marr_GOEnemyTypes.Length - 1)], Vector3.zero, Quaternion.identity) as UnityEngine.GameObject;
+			GOEnemy.GetComponent<Enemy>().Initialise();
+		}
+
 		ExecuteNextTurn();
 		CameraManager.Instance.LookAt(PlayerInstance.transform.position, false);
 	}
@@ -77,6 +86,7 @@ public class LevelManager : MonoBehaviour
 			// if: The current character type is enemy
 			if (_characterType.CharacterType == EnumCharacterType.Enemy)
 			{
+				_characterType.AStarInstance.TargetTransform = PlayerInstance.transform;
 				// if: There is a tile at position [x, y]
 				if (marr2_levelData[x, y])
 					// if: The current slot is taken by another piece
@@ -91,6 +101,8 @@ public class LevelManager : MonoBehaviour
 			// else: If the character type is typeof Player
 			else
 			{
+				m_playerInstance = _characterType.GetComponent<Player>();
+
 				// if: There is a tile at position [x, y]
 				if (marr2_levelData[x, y])
 					// if: The current slot is taken by another piece
@@ -104,9 +116,6 @@ public class LevelManager : MonoBehaviour
 			}
 
 		} while (!bIsFoundPlace);
-
-		if (_characterType.CharacterType == EnumCharacterType.Player)
-			m_playerInstance = _characterType.GetComponent<Player>();
 
 		mList_Character.Add(_characterType);
 		return true;

@@ -410,6 +410,11 @@ public class AStar : MonoBehaviour
 	/// Returns or defines a list of vector2 position that the navigator is able to go to
 	/// </summary>
 	public Vector2[] NeighboursToCheck { get { return marr_neighbourToCheck; } set { marr_neighbourToCheck = value; } }
+
+	/// <summary>
+	/// Define or return the target transform
+	/// </summary>
+	public Transform TargetTransform { get { return m_targetTransform; } set { m_targetTransform = value; } }
 }
 
 public class AStarNode

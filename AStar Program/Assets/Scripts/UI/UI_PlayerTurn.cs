@@ -429,14 +429,14 @@ public class UI_PlayerTurn : MonoBehaviour
 				if (_bIsDelay)
 				{
 					DelayAction actDelay = new DelayAction(i * m_fNextCardAppearDelay);
-					LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
+					LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.15f);
 					ActionSequence actSequence = new ActionSequence(actDelay, actMoveToPosition);
 
 					ActionHandler.RunAction(actSequence);
 				}
 				else
 				{
-					LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.5f);
+					LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Bobber, vec3NewCardPosition, 0.15f);
 
 					ActionHandler.RunAction(actMoveToPosition);
 				}
@@ -471,7 +471,7 @@ public class UI_PlayerTurn : MonoBehaviour
 			// if: Animation is allowed
 			if (_bIsAnimate)
 			{
-				LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Dipper, vec3NewHidePosition, 0.5f);
+				LocalMoveToAction actMoveToPosition = new LocalMoveToAction(marr_trCards[i], Graph.Dipper, vec3NewHidePosition, 0.15f);
 				ActionHandler.RunAction(actMoveToPosition);
 			}
 			else

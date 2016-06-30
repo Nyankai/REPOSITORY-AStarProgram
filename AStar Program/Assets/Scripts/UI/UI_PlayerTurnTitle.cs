@@ -106,7 +106,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 
 				// Execute an action
 				DelayAction actDelay = new DelayAction(i * m_fNextElementDelay);
-				LocalMoveToAction actMoveEnter = new LocalMoveToAction(marr_trTitleElement[i], Graph.Bobber, marr_vec3DisplayPosition[i], 0.25f);
+				LocalMoveToAction actMoveEnter = new LocalMoveToAction(marr_trTitleElement[i], Graph.Bobber, marr_vec3DisplayPosition[i], 0.15f);
 				ActionSequence actSequence = new ActionSequence(actDelay, actMoveEnter);
 
 				// if: The last action completed should activate the next animation
@@ -139,7 +139,7 @@ public class UI_PlayerTurnTitle : MonoBehaviour
 
 				// Execute an action
 				DelayAction actDelay = new DelayAction(i * m_fNextElementDelay);
-				LocalMoveToAction actMoveExit = new LocalMoveToAction(marr_trTitleElement[i], Graph.Bobber, marr_vec3HidePosition[i], 0.25f);
+				LocalMoveToAction actMoveExit = new LocalMoveToAction(marr_trTitleElement[i], Graph.Bobber, marr_vec3HidePosition[i], 0.15f);
 				ActionSequence actSequence = new ActionSequence(actDelay, actMoveExit);
 
 				ActionHandler.RunAction(actSequence);
