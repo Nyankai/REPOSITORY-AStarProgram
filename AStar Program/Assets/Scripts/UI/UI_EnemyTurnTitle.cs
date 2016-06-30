@@ -84,7 +84,7 @@ public class UI_EnemyTurnTitle : MonoBehaviour
 		m_textEnemy.color = m_colorTitle;
 		SetBackgroundColor(m_colorBackground);
 
-		TransitionEnter(true);
+		TransitionExit(false);
 	}
 
 	// Public Functions

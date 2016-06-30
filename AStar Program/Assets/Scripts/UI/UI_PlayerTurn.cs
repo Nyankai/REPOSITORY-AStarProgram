@@ -148,21 +148,59 @@ public class UI_PlayerTurn : MonoBehaviour
 	public void EndSequence()
 	{
 		// Ending Variables
+		m_OPSelection.PoolAllObjects();
 		TransitionExit(true, true);
 		for (int i = 0; i < marr_nCardOrder.Length; i++)
 			if (marr_nCardOrder[i] != -1)
 				LevelManager.Instance.PlayerInstance.CardDeck[i] = EnumPieceType.Null;
 
 		// Player Action Handling
+		bool[,] arr2_bEnemyConstrain = LevelManager.Instance.GetCharacterConstrain(EnumCharacterType.Enemy);
+
 		ActionSequence actSequence = new ActionSequence();
 		for (int i = 1; i <= m_nCurrentStep; i++)
 		{
-			MoveToAction actMoveToNext = new MoveToAction(LevelManager.Instance.PlayerInstance.transform, Graph.InverseExponential, marr_vec3StepPosition[i], 0.25f);
-			actSequence.Add(actMoveToNext);
+			// Converts to grid space
+			int[] arr_nCoords = new int[2];
+			arr_nCoords[0] = Mathf.RoundToInt(marr_vec3StepPosition[i].x);
+			arr_nCoords[1] = Mathf.RoundToInt(marr_vec3StepPosition[i].z);
+
+			// if: There is no enemy constrain in the current co-ordinates
+			if (arr2_bEnemyConstrain[arr_nCoords[0], arr_nCoords[1]])
+			{
+				MoveToAction actMoveToNext = new MoveToAction(LevelManager.Instance.PlayerInstance.transform, Graph.InverseExponential, marr_vec3StepPosition[i], 0.25f);
+				actSequence.Add(actMoveToNext);
+			}
+			// else: Kill the enemy
+			else
+			{
+				Character characterTarget = LevelManager.Instance.GetCharacter(arr_nCoords[0], arr_nCoords[1]);
+				MoveToAction actJump = new MoveToAction(LevelManager.Instance.PlayerInstance.transform, Graph.InverseExponential, marr_vec3StepPosition[i] + new Vector3(0f, 2f, 0f), 0.5f);
+				actJump.OnActionStart += () =>
+				{
+					CameraManager.Instance.ZoomInAt(characterTarget.transform, true);
+				};
+				MoveToAction actSlam = new MoveToAction(LevelManager.Instance.PlayerInstance.transform, Graph.Exponential, marr_vec3StepPosition[i], 0.1f);
+				DelayAction actDelay = new DelayAction(0.5f);
+
+				ScaleToAction actSquash = new ScaleToAction(characterTarget.transform, Graph.Exponential, new Vector3(1f, 0f, 1f), 0.1f);
+				ActionParallel actSlamAndSquash = new ActionParallel(actSlam, actSquash);
+				actSlamAndSquash.OnActionStart += CameraManager.Instance.Shake;
+				actSlamAndSquash.OnActionFinish += () => 
+				{ 
+					characterTarget.Kill();
+					CameraManager.Instance.LookAt(LevelManager.Instance.PlayerInstance.transform.position, true);
+				};
+				actSequence.Add(actJump, actSlamAndSquash, actDelay);
+				//CameraManager.Instance.ZoomInAt(marr_vec3StepPosition[i], true);
+			}
 		}
 		actSequence.OnActionFinish += () => 
 		{
 			// After-animations Variables Handling
+			LevelManager.Instance.PlayerInstance.X = Mathf.RoundToInt(marr_vec3StepPosition[m_nCurrentStep].x);
+			LevelManager.Instance.PlayerInstance.Y = Mathf.RoundToInt(marr_vec3StepPosition[m_nCurrentStep].z);
+			CameraManager.Instance.LookAt(marr_vec3StepPosition[m_nCurrentStep], true);
 			m_OPStep.PoolAllObjects();
 			m_OPStepArrow.PoolAllObjects();
 
@@ -425,11 +463,8 @@ public class UI_PlayerTurn : MonoBehaviour
 		// for: Every card...
 		for (int i = 0; i < m_nCardCount; i++)
 		{
-			// Set-up the card's display
-			marr_textHeader[i].text = "NAME";
-			marr_textSubheader[i].text = "...";
-
 			// Set the current card to the hidden position
+			ChangeCardColor(i, m_colorCard, m_colorCardHighlight);
 			Vector3 vec3NewHidePosition = marr_trCards[i].localPosition;
 			vec3NewHidePosition.y = m_fDefaultYHeight - m_fHideHeight;
 

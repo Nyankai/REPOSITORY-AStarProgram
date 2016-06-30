@@ -21,6 +21,11 @@ public class Player : Character
 		UI_PlayerTurn.Instance.BeginSequence();
 	}
 
+	public override void Kill()
+	{
+		LevelManager.Instance.RemoveCharacter(this as Character);
+	}
+
 	// Private Functions
 	// Awake(): is called at the start of a program
 	void Awake()

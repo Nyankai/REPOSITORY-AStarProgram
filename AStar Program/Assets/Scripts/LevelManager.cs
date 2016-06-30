@@ -53,13 +53,8 @@ public class LevelManager : MonoBehaviour
 	// Start(): Use this for initialisation
 	void Start()
 	{
-		string str = "| ";
-		for (int i = 0; i < mList_Character.Count; i++)
-			str += (mList_Character[i].gameObject.name + " | ");
-
-		Debug.Log(str);
 		ExecuteNextTurn();
-		CameraManager.Instance.LookAt(new Vector3(7f, 0f, 7f), false);
+		CameraManager.Instance.LookAt(PlayerInstance.transform.position, false);
 	}
 
 	// Public Functions
@@ -118,6 +113,36 @@ public class LevelManager : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Removes the character from the character array
+	/// </summary>
+	/// <param name="_characterType"> THe character to remove from the list </param>
+	public bool RemoveCharacter(Character _characterType)
+	{
+		if (mList_Character.Contains(_characterType))
+		{
+			mList_Character.Remove(_characterType);
+			Destroy(_characterType.gameObject);
+			return true;
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Removes the character from the character array
+	/// </summary>
+	/// <param name="_x"> The x coordinates of the character </param>
+	/// <param name="_y"> The y coordinates of the character </param>
+	/// <returns></returns>
+	public bool RemoveCharacter(int _x, int _y)
+	{
+		Character character = GetCharacter(_x, _y);
+		if (character == null)
+			return false;
+		else
+			return RemoveCharacter(character);
+	}
+
+	/// <summary>
 	/// Execute a next turn. This will be used to start the game as well
 	/// </summary>
 	public void ExecuteNextTurn()
@@ -125,10 +150,9 @@ public class LevelManager : MonoBehaviour
 		// if: This is the first round, allow the player to start first
 		if (m_nCurrentTurn == -1)
 		{
-			//for (int i = 0; i < mList_Character.Count; i++)
-			//	if (mList_Character[i].CharacterType == EnumCharacterType.Player)
-			//		m_nCurrentTurn = i;
-			m_nCurrentTurn = 0;
+			for (int i = 0; i < mList_Character.Count; i++)
+				if (mList_Character[i].CharacterType == EnumCharacterType.Player)
+					m_nCurrentTurn = i;
 		}
 		else
 			m_nCurrentTurn = (m_nCurrentTurn + 1) % mList_Character.Count;
@@ -162,6 +186,23 @@ public class LevelManager : MonoBehaviour
 		}
 
 		return arr2_characterConstrain;
+	}
+
+	/// <summary>
+	/// Returns the character as the specific coordinates. Returns null if there is no character at the coordinates
+	/// </summary>
+	/// <param name="_x"> The x coordinates of the character </param>
+	/// <param name="_y"> The y coordinates of the character </param>
+	/// <returns></returns>
+	public Character GetCharacter(int _x, int _y)
+	{
+		for (int i = 0; i < mList_Character.Count; i++)
+		{
+			if (mList_Character[i].X == _x)
+				if (mList_Character[i].Y == _y)
+					return mList_Character[i];
+		}
+		return null;
 	}
 
 	// Getter-Setter Functions

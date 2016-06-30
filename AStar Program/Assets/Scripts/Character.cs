@@ -16,6 +16,11 @@ public abstract class Character : MonoBehaviour
 	/// </summary>
 	public abstract void ExecuteTurn();
 
+	/// <summary>
+	/// Remote kill the character
+	/// </summary>
+	public abstract void Kill();
+
 	// Getter-Setter Function
 	/// <summary>
 	/// Return the character type of the current Character

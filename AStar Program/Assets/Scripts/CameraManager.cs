@@ -189,6 +189,18 @@ public class CameraManager : MonoBehaviour
 		}
 	}
 
+	public void Shake()
+	{
+		Vector3 vec3Shake = new Vector3(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value).normalized;
+		MoveToAction actShake = new MoveToAction(transform, Graph.InverseQuadratic, transform.position + vec3Shake, 0.1f);
+		actShake.OnActionFinish += () =>
+		{
+			m_bIsTransiting = false;
+		};
+		ActionHandler.RunAction(actShake);
+		m_bIsTransiting = true;
+	}
+
 	// Static Functions
 	/// <summary>
 	/// Returns the single instance of CameraManager
